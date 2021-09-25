@@ -1,0 +1,15 @@
+.idea/*
+.vscode
+build
+package
+dist
+node_modules
+test
+src/**.js
+coverage
+*.log
+.env.local
+.DS_Store
+*.tsbuildinfo
+*.tgz
+package-lock.json

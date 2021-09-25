@@ -1,0 +1,81 @@
+{
+  "name": "@onekeyhq/blockchain-libs",
+  "description": "OneKey Blockchain Libs",
+  "version": "0.0.16",
+  "author": "OneKey Team",
+  "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
+  "bugs": {
+    "url": "https://github.com/OneKeyHQ/blockchain-libs/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/OneKeyHQ/blockchain-libs.git"
+  },
+  "keywords": [
+    "onekey",
+    "blockchain",
+    "multi-chains",
+    "cryptocurrency"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "build": "run-s clean build:main",
+    "build:main": "tsc -p tsconfig.json",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier --write .",
+    "fix:lint": "eslint src --ext .ts --fix",
+    "test": "run-s test:*",
+    "test:lint": "eslint src --ext .ts",
+    "test:prettier": "prettier --check .",
+    "prepack": "npm run build",
+    "clean": "rimraf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz",
+    "lint-staged": "lint-staged",
+    "prepare": "husky install",
+    "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@commitlint/cli": "^13.1.0",
+    "@commitlint/config-conventional": "^13.1.0",
+    "@types/node": "^12.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1",
+    "eslint": "^7.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "husky": "^7.0.2",
+    "lint-staged": "^11.1.2",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.4.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.4.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,md,yml,toml,json}": [
+      "prettier --write",
+      "prettier --check"
+    ],
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --cache --fix",
+      "eslint"
+    ]
+  }
+}

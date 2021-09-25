@@ -1,0 +1,57 @@
+name: Package & Publish
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  lint-test:
+    permissions:
+      contents: write
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
+
+  package:
+    needs: ['lint-test']
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.x'
+      - run: yarn install --frozen-lockfile
+      - run: yarn pack
+      - uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: './*.tgz'
+
+  publish:
+    needs: ['package']
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: package
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+          registry-url: https://npm.pkg.github.com/
+          scope: '@onekeyhq'
+
+      - run: npm publish $(ls *.tgz)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
