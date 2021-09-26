@@ -9,15 +9,11 @@
     "node": ">=10"
   },
   "scripts": {
-    "start": "backpack",
-    "transpile": "backpack build",
-    "build": "run-s clean transpile",
-    "clean": "rimraf build",
+    "dev": "nodemon src/index.ts",
     "refresh_local_lib": "scripts/refresh_local_libs.sh"
   },
   "dependencies": {
     "@onekeyhq/blockchain-libs": "./package/onekeyhq-blockchain-libs.tgz",
-    "backpack-core": "^0.8.4",
     "express": "^4.17.1",
     "http-status-codes": "^2.1.4"
   },
@@ -25,10 +21,8 @@
     "@types/express": "^4.17.13",
     "@types/node": "^12.0.0",
     "express-interceptor": "^1.2.0",
-    "fork-ts-checker-webpack-plugin": "^4.1.2",
-    "npm-run-all": "^4.1.5",
-    "rimraf": "^3.0.2",
-    "ts-loader": "^6.2.2",
+    "nodemon": "^2.0.13",
+    "ts-node": "^10.2.1",
     "typescript": "^4.4.3"
   }
 }
