@@ -22,7 +22,8 @@
     "node": ">=10"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "run-s clean build:main",
+    "build:main": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier --write .",
     "fix:lint": "eslint src --ext .ts --fix",
@@ -30,7 +31,7 @@
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier --check .",
     "prepack": "npm run build",
-    "clear": "rm -rf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz"
+    "clean": "rimraf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,7 +53,8 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.22.0",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
-    "@typescript-eslint/parser": "^4.0.1"
+    "@typescript-eslint/parser": "^4.0.1",
+    "rimraf": "^3.0.2"
   },
   "pre-commit": [
     "test"
