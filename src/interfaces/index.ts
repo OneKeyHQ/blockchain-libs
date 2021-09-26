@@ -1,2 +1,2 @@
-export * from './storage';
+export * from './api-config';
 export * from './wallet';

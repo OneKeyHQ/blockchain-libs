@@ -1,3 +1,3 @@
-export * from './interfaces';
+export * as interfaces from './interfaces';
 export * from './wallet';
-export * from './blockchain-manager';
+export * from './api';

@@ -27,7 +27,8 @@
     "fix:prettier": "prettier --write .",
     "test": "run-s test:*",
     "test:prettier": "prettier --check .",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "clear": "rm -rf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
