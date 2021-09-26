@@ -1,19 +1,35 @@
-import { StorageManager, Wallet } from '../interfaces';
+import { StorageLike, Wallet } from '../types';
 
-class WalletManager {
-  // @ts-ignore
-  private readonly storageManager: StorageManager;
+export class WalletController {
+  private readonly storage: StorageLike;
 
-  constructor(storageManager: StorageManager) {
-    this.storageManager = storageManager;
+  constructor(storage: StorageLike) {
+    this.storage = storage;
   }
 
-  getAllWallets(): Promise<ReadonlyArray<Wallet>> {
-    return Promise.resolve([
-      { name: 'fake_wallet_1' },
-      { name: 'fake_wallet_2' },
-    ]);
+  private async getWalletIds(): Promise<Array<number>> {
+    return (await this.storage.get(['WALLET_IDS']))[0] || [];
+  }
+
+  async getWallets(): Promise<ReadonlyArray<Wallet>> {
+    const walletIds: Array<number> = await this.getWalletIds();
+    return await this.storage.get(walletIds.map((id) => `WALLET_${id}`));
+  }
+
+  async createWallet(): Promise<Wallet> {
+    const walletIds: Array<number> = await this.getWalletIds();
+    const lastId = walletIds.length > 0 ? walletIds[walletIds.length - 1] : -1;
+
+    const id = lastId + 1;
+    const wallet = {
+      id,
+      createdTime: Date.now(),
+      modifiedTime: Date.now(),
+    };
+
+    await this.storage.set(`WALLET_${id}`, wallet);
+    await this.storage.set('WALLET_IDS', [...walletIds, id]);
+
+    return wallet;
   }
 }
-
-export { Wallet, WalletManager };

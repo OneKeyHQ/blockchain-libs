@@ -1,3 +1,2 @@
-export * as interfaces from './interfaces';
-export * from './wallet';
-export * from './api';
+export * as Types from './types';
+export { BlockchainEngine } from './engine';

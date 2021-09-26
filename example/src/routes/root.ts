@@ -1,14 +1,15 @@
 import express from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { BlockchainApi } from '@onekeyhq/blockchain-libs';
 
 const index = (req: express.Request, resp: express.Response): void => {
-  resp.status(StatusCodes.OK).send('OneKey Blockchain Libs Example Server');
+  resp.status(StatusCodes.OK).send('Hello OneKey Blockchain Libs');
 };
 
 const ping = (req: express.Request, resp: express.Response): void => {
+  const message = req.query && req.query.message;
   resp.status(StatusCodes.OK).json({
-    pong: Date.now() / 1000,
+    pong: message || '',
+    timestamp: Date.now(),
   });
 };
 
