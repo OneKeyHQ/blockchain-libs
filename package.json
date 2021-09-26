@@ -25,7 +25,9 @@
     "build": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier --write .",
+    "fix:lint": "eslint src --ext .ts --fix",
     "test": "run-s test:*",
+    "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier --check .",
     "prepack": "npm run build",
     "clear": "rm -rf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz"
@@ -40,13 +42,19 @@
   ],
   "dependencies": {},
   "devDependencies": {
+    "typescript": "^4.4.3",
     "@types/node": "^12.0.0",
     "npm-run-all": "^4.1.5",
     "pre-commit": "^1.2.2",
     "prettier": "^2.3.2",
-    "typescript": "^4.4.3"
+    "eslint": "^7.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "@typescript-eslint/eslint-plugin": "^4.0.1",
+    "@typescript-eslint/parser": "^4.0.1"
   },
   "pre-commit": [
-    "test:prettier"
+    "test"
   ]
 }

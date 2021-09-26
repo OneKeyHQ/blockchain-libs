@@ -1,18 +1,20 @@
-interface StorageLike<T> {
-  create: (values: readonly T[]) => Promise<number>;
-  findAll: () => Promise<readonly T[]>;
-  update: (
-    updating: ReadonlyArray<{ readonly [key: number]: object }>,
+type StorageLike<T> = {
+  readonly create: (values: readonly T[]) => Promise<number>;
+  readonly findAll: () => Promise<readonly T[]>;
+  readonly update: (
+    updating: ReadonlyArray<{
+      readonly [key: number]: { readonly [key: string]: any };
+    }>,
   ) => Promise<number>;
-  delete: (ids: ReadonlyArray<number>) => Promise<number>;
-}
+  readonly delete: (ids: ReadonlyArray<number>) => Promise<number>;
+};
 
-interface StorageManager {
-  apply: <T>(name: string) => Promise<StorageLike<T>>;
-}
+type StorageManager = {
+  readonly apply: <T>(name: string) => Promise<StorageLike<T>>;
+};
 
-interface ApiConfig {
-  storageManager: StorageManager;
-}
+type ApiConfig = {
+  readonly storageManager: StorageManager;
+};
 
 export { StorageLike, StorageManager, ApiConfig };
