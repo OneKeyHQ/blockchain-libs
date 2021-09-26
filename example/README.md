@@ -1,4 +1,4 @@
-## Example Server
+# Example Server
 
 ## I want to run it
 
