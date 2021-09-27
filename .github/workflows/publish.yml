@@ -47,6 +47,6 @@ jobs:
           registry-url: https://npm.pkg.github.com/
           scope: '@onekeyhq'
 
-      - run: yarn publish $(ls *.tgz)
+      - run: npm publish $(ls *.tgz)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
