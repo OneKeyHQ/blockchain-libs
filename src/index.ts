@@ -1,2 +1,2 @@
-export * as Types from './types';
+export { StorageLike, ExternalConfig, Wallet } from './types';
 export { BlockchainEngine } from './engine';
