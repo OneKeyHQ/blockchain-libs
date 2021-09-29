@@ -1,12 +1,15 @@
 name: Package & Publish
 
 on:
-  push:
-    tags:
-      - 'v*'
+  pull_request:
+    types: [closed]
 
 jobs:
-  test:
+  lint-test:
+    if: |
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -17,7 +20,7 @@ jobs:
       - run: yarn test
 
   package:
-    needs: ['test']
+    needs: ['lint-test']
     runs-on: ubuntu-latest
 
     steps:
