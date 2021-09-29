@@ -41,7 +41,9 @@
     "LICENSE",
     "README.md"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "bignumber.js": "^9.0.1"
+  },
   "devDependencies": {
     "@types/node": "^12.0.0",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
