@@ -1,6 +1,7 @@
-import { StorageLike, Wallet } from '../types';
+import { StorageLike } from '../types/external-config';
+import { Wallet } from '../types/wallet';
 
-export class WalletController {
+class WalletController {
   private readonly storage: StorageLike;
 
   constructor(storage: StorageLike) {
@@ -33,3 +34,5 @@ export class WalletController {
     return wallet;
   }
 }
+
+export { WalletController };
