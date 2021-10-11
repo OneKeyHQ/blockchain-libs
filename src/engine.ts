@@ -1,7 +1,7 @@
-import { ExternalConfig } from './types';
+import { ExternalConfig } from './types/external-config';
 import { WalletController } from './wallet';
 
-export class BlockchainEngine {
+class BlockchainEngine {
   private readonly wallet: WalletController;
 
   constructor(config: ExternalConfig) {
@@ -16,3 +16,5 @@ export class BlockchainEngine {
     return this.wallet.createWallet();
   }
 }
+
+export { BlockchainEngine };
