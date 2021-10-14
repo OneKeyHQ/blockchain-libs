@@ -12,7 +12,7 @@
 
 ### Before start commit
 
-[Commit-Message details](https://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html)
+[Commit-Message details](https://github.com/conventional-changelog/commitlint)
 
 ```
 每次提交，Commit message 都包括三个部分：Header，Body 和 Footer。
