@@ -13,3 +13,4 @@ coverage
 *.tsbuildinfo
 *.tgz
 package-lock.json
+.eslintcache

@@ -1,13 +1,15 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "parserOptions": { "project": "./tsconfig.json" },
+  "parserOptions": { "project": "./tsconfig.eslint.json" },
   "env": { "es6": true },
   "ignorePatterns": [
     "node_modules",
     "build",
     "coverage",
-    "commitlint.config.js"
+    "commitlint.config.js",
+    "jest.config.js",
+    "jest-setup.js"
   ],
   "plugins": ["import", "eslint-comments"],
   "extends": [
@@ -27,6 +29,7 @@
       "error",
       { "allowWholeFile": true }
     ],
+    "@typescript-eslint/no-unused-vars": "off",
     "eslint-comments/no-unused-disable": "error",
     "import/order": [
       "error",
