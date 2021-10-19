@@ -8,14 +8,11 @@ import {
   FeePricePerUnit,
   TransactionStatus,
 } from '../../../types/provider';
-import { AbsClient } from '../../abc';
+import { BaseClient } from '../../abc';
 
-class Geth extends AbsClient {
-  broadcastTransaction(rawTx: string): Promise<BroadcastReceipt> {
-    return Promise.resolve({
-      isSuccess: false,
-      receiptCode: BroadcastReceiptCode.UNEXPECTED_FAILED,
-    });
+class Geth extends BaseClient {
+  broadcastTransaction(rawTx: string): Promise<boolean> {
+    return Promise.resolve(false);
   }
 
   getAddress(address: string): Promise<AddressInfo> {

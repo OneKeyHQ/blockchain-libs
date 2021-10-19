@@ -4,13 +4,14 @@ import {
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
-import { AbsProvider } from '../../abc';
+import { BaseProvider } from '../../abc';
 
-class Provider extends AbsProvider {
+class Provider extends BaseProvider {
   buildUnsignedTx(unsignedTx: UnsignedTx | undefined): Promise<UnsignedTx> {
     return Promise.resolve({
       inputs: [],
       outputs: [],
+      payload: {},
     });
   }
 
