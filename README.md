@@ -15,25 +15,28 @@
 [Commit-Message details](https://github.com/conventional-changelog/commitlint)
 
 ```
-每次提交，Commit message 都包括三个部分：Header，Body 和 Footer。
+A commit message consists of three sections: Header(required), Body(optional)
+and Footer(optional).
+
+Header is a single line string which is composed of three parts:
+type(required), scope(optional) and subject(required).
 
 <type>(<scope>): <subject>
-// 空一行
+// An empty line
 <body>
-// 空一行
+// An empty line
 <footer>
 
-其中，Header 是必需的，Body 和 Footer 可以省略。
-不管是哪一个部分，任何一行都不得超过72个字符（或100个字符）。这是为了避免自动换行影响美观。
-2.1 Header
-Header部分只有一行，包括三个字段：type（必需）、scope（可选）和subject（必需）。
+To avoid automatic line wrapping, always wrap lines of a commit message
+to 72 characters.
+
 ---
-方式一(手动编辑)：
+Commit method 1 (manually)：
    eg:
       git commit -m "feat: add some new features"
       git commit -m "fix: fix some bugs"
 
-方式二(交互式)：
+Commit method 2 (interactively)：
    brew install commitizen
    cz c
 ```
