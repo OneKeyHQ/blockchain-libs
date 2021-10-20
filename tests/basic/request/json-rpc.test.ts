@@ -109,6 +109,26 @@ test('Call RPC but result not found in response', async () => {
   );
 });
 
+test('Call RPC and get null from result', async () => {
+  mockFetch.mockReturnValueOnce(
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          result: null,
+        }),
+      ),
+    ),
+  );
+
+  const response = await new JsonRPCRequest('https://mytest.com/rpc').call(
+    'ping',
+    [],
+  );
+
+  expect(response).toBe(null);
+});
+
 test('Batch call RPC as expected', async () => {
   mockFetch.mockReturnValueOnce(
     Promise.resolve(
