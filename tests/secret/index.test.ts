@@ -1,3 +1,5 @@
+import { IncorrectPassword } from '../../src/basic/exceptions';
+import { decrypt, encrypt } from '../../src/secret/encryptors/aes256';
 import {
   CKDPriv,
   CKDPub,
@@ -398,9 +400,10 @@ const testVectors = [
   },
 ];
 
+const password = 'onekey';
 const xPrvTest = {
   chainCode: Buffer.alloc(32),
-  key: Buffer.alloc(32),
+  key: encrypt(password, Buffer.alloc(32)),
 };
 
 const xPubTest = {
@@ -423,15 +426,16 @@ test('Basic key derivation tests', () => {
     const parentPubs = [];
     for (const childIndex of testVectorBatch.path.split('/')) {
       if (childIndex == 'm') {
-        const extPriv = generateMasterKeyFromSeed(
+        const encryptedExtPriv = generateMasterKeyFromSeed(
           curveName,
-          Buffer.from(testVectorBatch.seed, 'hex'),
+          encrypt(password, Buffer.from(testVectorBatch.seed, 'hex')),
+          password,
         );
-        const extPub = N(curveName, extPriv);
-        expect(extPriv.chainCode).toStrictEqual(extPub.chainCode);
+        const extPub = N(curveName, encryptedExtPriv, password);
+        expect(encryptedExtPriv.chainCode).toStrictEqual(extPub.chainCode);
         result.push({
-          chainCode: extPriv.chainCode.toString('hex'),
-          private: extPriv.key.toString('hex'),
+          chainCode: encryptedExtPriv.chainCode.toString('hex'),
+          private: decrypt(password, encryptedExtPriv.key).toString('hex'),
           public: publicKeyToString(curveName, extPub.key),
         });
         parentPubs.push(extPub.key);
@@ -447,15 +451,16 @@ test('Basic key derivation tests', () => {
         }
 
         const parent = result[result.length - 1];
-        const extPriv = CKDPriv(
+        const encryptedExtPriv = CKDPriv(
           curveName,
           {
             chainCode: Buffer.from(parent.chainCode, 'hex'),
-            key: Buffer.from(parent.private, 'hex'),
+            key: encrypt(password, Buffer.from(parent.private, 'hex')),
           },
           index,
+          password,
         );
-        const extPub = N(curveName, extPriv);
+        const extPub = N(curveName, encryptedExtPriv, password);
         if (!isHardenedChild) {
           expect(extPub).toStrictEqual(
             CKDPub(
@@ -469,8 +474,8 @@ test('Basic key derivation tests', () => {
           );
         }
         result.push({
-          chainCode: extPriv.chainCode.toString('hex'),
-          private: extPriv.key.toString('hex'),
+          chainCode: encryptedExtPriv.chainCode.toString('hex'),
+          private: decrypt(password, encryptedExtPriv.key).toString('hex'),
           public: publicKeyToString(curveName, extPub.key),
         });
         parentPubs.push(extPub.key);
@@ -481,18 +486,29 @@ test('Basic key derivation tests', () => {
 });
 
 test('Basic signing & verifying tests', () => {
-  const seed = Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex');
+  const seed = encrypt(
+    password,
+    Buffer.from('000102030405060708090a0b0c0d0e0f', 'hex'),
+  );
   const msgHash = Buffer.from('Hello Onekey.');
   for (const c of ['secp256k1', 'nistp256', 'ed25519']) {
     const curveName = c as CurveName;
-    const extPriv = generateMasterKeyFromSeed(curveName, seed);
-    const publicKey = publicFromPrivate(curveName, extPriv.key);
+    const encryptedExtPriv = generateMasterKeyFromSeed(
+      curveName,
+      seed,
+      password,
+    );
+    const publicKey = publicFromPrivate(
+      curveName,
+      encryptedExtPriv.key,
+      password,
+    );
     expect(
       verify(
         curveName,
         publicKey,
         msgHash,
-        sign(curveName, extPriv.key, msgHash),
+        sign(curveName, encryptedExtPriv.key, msgHash, password),
       ),
     ).toStrictEqual(true);
   }
@@ -501,12 +517,12 @@ test('Basic signing & verifying tests', () => {
 test('Not supported curve tests', () => {
   const curveName = '' as CurveName;
   expect(() => {
-    generateMasterKeyFromSeed(curveName, Buffer.from(''));
+    generateMasterKeyFromSeed(curveName, Buffer.from(''), password);
   }).toThrowError(
     new Error(`Key derivation is not supported for curve ${curveName}.`),
   );
   expect(() => {
-    sign(curveName, Buffer.from(''), Buffer.from(''));
+    sign(curveName, Buffer.from(''), Buffer.from(''), password);
   }).toThrowError(new Error(`Curve ${curveName} is not supported.`));
 });
 
@@ -518,13 +534,13 @@ test('Wrong length of ECDSA signature', () => {
 
 test('Child index is not int', () => {
   expect(() => {
-    CKDPriv('secp256k1', xPrvTest, 1.1);
+    CKDPriv('secp256k1', xPrvTest, 1.1, password);
   }).toThrowError(new Error('Invalid index.'));
 });
 
 test('Child index too big', () => {
   expect(() => {
-    CKDPriv('secp256k1', xPrvTest, 2 ** 32);
+    CKDPriv('secp256k1', xPrvTest, 2 ** 32, password);
   }).toThrowError(new Error('Overflowed.'));
   expect(() => {
     CKDPub('secp256k1', xPubTest, 2 ** 32);
@@ -540,7 +556,7 @@ test('(ECDSA) CKDPub failed for hardened index', () => {
 
 test('Normal CKDPriv is not supported for ed25519', () => {
   expect(() => {
-    CKDPriv('ed25519', xPrvTest, 1);
+    CKDPriv('ed25519', xPrvTest, 1, password);
   }).toThrowError(new Error('Only hardened CKDPriv is supported for ed25519.'));
 });
 
@@ -548,4 +564,15 @@ test('CKDPub is not supported for ed25519', () => {
   expect(() => {
     CKDPub('ed25519', xPubTest, 0);
   }).toThrowError(new Error('CKDPub is not supported for ed25519.'));
+});
+
+test('Normal encryption/decryption', () => {
+  const data = Buffer.from('deadbeef', 'hex');
+  expect(decrypt(password, encrypt(password, data))).toStrictEqual(data);
+});
+
+test('Incorrect password', () => {
+  expect(() => {
+    decrypt(password + password, encrypt(password, Buffer.from('')));
+  }).toThrow(IncorrectPassword);
 });
