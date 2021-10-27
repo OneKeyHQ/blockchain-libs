@@ -6,36 +6,35 @@ type ClientInfo = {
 };
 
 type AddressInfo = {
-  address: string;
   balance: BigNumber;
   existing: boolean;
   nonce?: number;
 };
 
 enum TransactionStatus {
-  UNKNOWN = 0,
+  NOT_FOUND = 0,
   PENDING = 1,
   CONFIRM_AND_SUCCESS = 10,
   CONFIRM_BUT_FAILED = 11,
 }
 
-enum BroadcastReceiptCode {
-  UNKNOWN = 0,
-  UNEXPECTED_FAILED = 1,
-
-  SUCCESS = 100,
-  ALREADY_KNOWN = 101,
-  NONCE_TOO_LOW = 102,
-
-  ETH_RBF_UNDERPRICE = 201,
-  ETH_GAS_PRICE_TOO_LOW = 202,
-  ETH_GAS_LIMIT_EXCEEDED = 203,
-}
-
-type BroadcastReceipt = {
-  isSuccess: boolean;
-  receiptCode: BroadcastReceiptCode;
-};
+// enum BroadcastReceiptCode {
+//   UNKNOWN = 0,
+//   UNEXPECTED_FAILED = 1,
+//
+//   SUCCESS = 100,
+//   ALREADY_KNOWN = 101,
+//   NONCE_TOO_LOW = 102,
+//
+//   ETH_RBF_UNDERPRICE = 201,
+//   ETH_GAS_PRICE_TOO_LOW = 202,
+//   ETH_GAS_LIMIT_EXCEEDED = 203,
+// }
+//
+// type BroadcastReceipt = {
+//   isSuccess: boolean;
+//   receiptCode: BroadcastReceiptCode;
+// };
 
 type EstimatedPrice = {
   price: BigNumber;
@@ -47,17 +46,16 @@ type FeePricePerUnit = {
   others?: Array<EstimatedPrice>;
 };
 
-type TokenInfo = {
-  tokenAddress: string;
-  decimals: string;
+type PartialTokenInfo = {
+  decimals: number;
   name: string;
   symbol: string;
 };
 
 type AddressValidation = {
-  normalizedAddress: string;
-  displayAddress: string;
   isValid: boolean;
+  normalizedAddress?: string;
+  displayAddress?: string;
   encoding?: string;
 };
 
@@ -99,11 +97,11 @@ export {
   ClientInfo,
   AddressInfo,
   TransactionStatus,
-  BroadcastReceiptCode,
-  BroadcastReceipt,
+  // BroadcastReceiptCode,
+  // BroadcastReceipt,
   EstimatedPrice,
   FeePricePerUnit,
-  TokenInfo,
+  PartialTokenInfo,
   AddressValidation,
   UTXO,
   TxInput,

@@ -7,8 +7,8 @@ import {
   AddressValidation,
   ClientInfo,
   FeePricePerUnit,
+  PartialTokenInfo,
   SignedTx,
-  TokenInfo,
   TransactionStatus,
   UnsignedTx,
   UTXO,
@@ -22,63 +22,31 @@ abstract class BaseClient {
     this.chainInfo = chainInfo;
   }
 
-  abstract broadcastTransaction(rawTx: string): Promise<boolean>;
-
   abstract getInfo(): Promise<ClientInfo>;
 
-  abstract getAddress(address: string): Promise<AddressInfo>;
+  abstract getAddresses(
+    addresses: Array<string>,
+  ): Promise<Array<AddressInfo | undefined>>;
+
+  abstract getBalances(
+    requests: Array<{ address: string; coin: Partial<CoinInfo> }>,
+  ): Promise<Array<BigNumber | undefined>>;
+
+  abstract getTransactionStatuses(
+    txids: Array<string>,
+  ): Promise<Array<TransactionStatus | undefined>>;
 
   abstract getFeePricePerUnit(): Promise<FeePricePerUnit>;
 
-  abstract getTransactionStatus(txid: string): Promise<TransactionStatus>;
+  abstract broadcastTransaction(rawTx: string): Promise<boolean>;
 
-  getBalance(address: string, coin: CoinInfo): Promise<BigNumber> {
-    if (!coin?.tokenAddress) {
-      return this.getAddress(address).then((address) => address.balance);
-    }
-
-    throw NotImplementedError;
-  }
-
-  batchGetAddresses(
-    addresses: string[],
-  ): Promise<Array<AddressInfo | undefined>> {
-    return Promise.all(
-      addresses.map((address) =>
-        this.getAddress(address).catch((e) => {
-          console.error(
-            `Error in getting address, use undefined as the default value. 
-            address: ${address}, error: ${e}`,
-          );
-          return undefined;
-        }),
-      ),
-    );
-  }
-
-  batchGetBalances(
-    calls: ReadonlyArray<{ address: string; coin: CoinInfo }>,
-  ): Promise<Array<BigNumber | undefined>> {
-    return Promise.all(
-      calls.map(({ address, coin }) =>
-        this.getBalance(address, coin).catch((e) => {
-          console.error(
-            `Error in getting balance, use undefined as the default value.  
-             address: ${address}, coin: ${coin}, error: ${e}`,
-          );
-          return undefined;
-        }),
-      ),
-    );
-  }
-
-  getTokenInfo(
-    tokenAddresses: string[],
-  ): Promise<Array<TokenInfo | undefined>> {
+  getTokenInfos(
+    tokenAddresses: Array<string>,
+  ): Promise<Array<PartialTokenInfo | undefined>> {
     return Promise.reject(NotImplementedError);
   }
 
-  getUTXOs(address: Array<string>): Promise<{ [address: string]: UTXO }> {
+  getUTXOs(addresses: Array<string>): Promise<{ [address: string]: UTXO[] }> {
     return Promise.reject(NotImplementedError);
   }
 }
@@ -87,11 +55,13 @@ type ClientFilter = <T extends BaseClient>(client: T) => boolean;
 
 abstract class BaseProvider {
   readonly chainInfo: ChainInfo;
-  readonly clientSelector: <T extends BaseClient>(filter?: ClientFilter) => T;
+  readonly clientSelector: <T extends BaseClient>(
+    filter?: ClientFilter,
+  ) => Promise<T>;
 
-  protected constructor(
+  constructor(
     chainInfo: ChainInfo,
-    clientSelector: <T extends BaseClient>(filter?: ClientFilter) => T,
+    clientSelector: <T extends BaseClient>(filter?: ClientFilter) => Promise<T>,
   ) {
     this.chainInfo = chainInfo;
     this.clientSelector = clientSelector;
@@ -120,7 +90,7 @@ abstract class BaseProvider {
     signer: Signer,
     address?: string,
   ): Promise<string> {
-    return Promise.reject('Not supported');
+    return Promise.reject(NotImplementedError);
   }
 
   verifyMessage(
@@ -128,7 +98,7 @@ abstract class BaseProvider {
     message: string,
     signature: string,
   ): Promise<boolean> {
-    return Promise.reject('Not supported');
+    return Promise.reject(NotImplementedError);
   }
 }
 

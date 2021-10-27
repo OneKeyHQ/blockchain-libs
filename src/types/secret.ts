@@ -4,7 +4,7 @@ interface Verifier {
 }
 
 interface Signer {
-  sign: (digest: Buffer) => Promise<Buffer>;
+  sign: (digest: Buffer) => Promise<[Buffer, number]>;
   getPrvkey: () => Promise<Buffer>;
 }
 

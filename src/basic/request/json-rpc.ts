@@ -23,7 +23,7 @@ class JsonRPCRequest {
     }
   }
 
-  private static async parseRPCResponse(response: any): Promise<unknown> {
+  private static async parseRPCResponse<T>(response: any): Promise<T> {
     if (typeof response !== 'object') {
       throw new ResponseError(
         'Invalid JSON RPC response, typeof response should be an object',
@@ -31,14 +31,14 @@ class JsonRPCRequest {
       );
     } else if (response.error) {
       throw new JsonPRCResponseError('Error JSON PRC response', response);
-    } else if (!response.result) {
+    } else if (!('result' in response)) {
       throw new ResponseError(
         'Invalid JSON RPC response, result not found',
         response,
       );
     }
 
-    return response.result;
+    return response.result as T;
   }
 
   private static normalizePayload(
@@ -59,12 +59,12 @@ class JsonRPCRequest {
     return payload;
   }
 
-  async call(
+  async call<T>(
     method: string,
     params: JsonRpcParams,
     headers?: Record<string, string>,
     timeout?: number,
-  ): Promise<unknown> {
+  ): Promise<T> {
     headers = this.assembleHeaders(headers);
     const payload = JsonRPCRequest.normalizePayload(method, params);
 
@@ -83,12 +83,12 @@ class JsonRPCRequest {
     return JsonRPCRequest.parseRPCResponse(jsonResponse);
   }
 
-  async batchCall(
+  async batchCall<T>(
     calls: Array<[string, JsonRpcParams]>,
     headers?: { [p: string]: string },
     timeout?: number,
     ignoreSoloError = true,
-  ): Promise<Array<unknown | undefined>> {
+  ): Promise<T> {
     headers = this.assembleHeaders(headers);
     const payload = calls.map(([method, params], index) =>
       JsonRPCRequest.normalizePayload(method, params, index),
@@ -118,6 +118,7 @@ class JsonRPCRequest {
       );
     }
 
+    // @ts-ignore
     return Promise.all(
       jsonResponses.map((response) =>
         JsonRPCRequest.parseRPCResponse(response).catch((e) => {

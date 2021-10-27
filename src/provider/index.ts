@@ -1,13 +1,15 @@
 import BigNumber from 'bignumber.js';
 
+import { checkIsDefined } from '../basic/precondtion';
+import { createAnyPromise, createDelayPromise } from '../basic/promise-plus';
 import { ChainInfo, CoinInfo } from '../types/chain';
 import {
   AddressInfo,
   AddressValidation,
   ClientInfo,
   FeePricePerUnit,
+  PartialTokenInfo,
   SignedTx,
-  TokenInfo,
   TransactionStatus,
   UnsignedTx,
   UTXO,
@@ -15,6 +17,10 @@ import {
 import { Signer, Verifier } from '../types/secret';
 
 import { BaseClient, BaseProvider, ClientFilter } from './abc';
+
+const IMPLS: { [key: string]: any } = {
+  eth: require('./chains/eth'),
+};
 
 class ProviderController {
   private clientsCache: { [chainCoin: string]: Array<BaseClient> } = {};
@@ -46,7 +52,7 @@ class ProviderController {
     if (!clients || clients.length === 0) {
       const chainInfo = this.chainSelector(chainCoin);
 
-      const module: any = this.requireChainModule(chainInfo.impl);
+      const module: any = this.requireChainImpl(chainInfo.impl);
       clients = chainInfo.clients
         .map((config) => [module[config.name], config])
         .filter(([clazz, _]) => typeof clazz != 'undefined')
@@ -61,19 +67,21 @@ class ProviderController {
     let client: BaseClient | undefined = undefined;
 
     try {
-      client = await Promise.any([
-        ...clients.filter(filter).map(async (candidate) => {
-          const info = await candidate.getInfo();
+      client = await Promise.race([
+        createAnyPromise(
+          clients.filter(filter).map(async (candidate) => {
+            const info = await candidate.getInfo();
 
-          if (!info.isReady) {
-            throw Error(`Client<${candidate.constructor.name}> is not ready.`);
-          }
+            if (!info.isReady) {
+              throw Error(
+                `${candidate.constructor.name}<${candidate}> is not ready.`,
+              );
+            }
 
-          return candidate;
-        }),
-        new Promise((resolve) => {
-          setTimeout(() => resolve(undefined), 10000);
-        }),
+            return candidate;
+          }),
+        ),
+        createDelayPromise(10000, undefined),
       ]);
     } catch (e) {
       console.error(e);
@@ -89,37 +97,47 @@ class ProviderController {
 
   getProvider(chainCoin: string): Promise<BaseProvider> {
     const chainInfo = this.chainSelector(chainCoin);
-    const providerClass = this.requireChainModule(chainInfo.impl).Provider;
+    const { Provider } = this.requireChainImpl(chainInfo.impl);
 
     return Promise.resolve(
-      new providerClass(chainInfo, (filter?: ClientFilter) =>
+      new Provider(chainInfo, (filter?: ClientFilter) =>
         this.getClient(chainCoin, filter),
       ),
     );
   }
 
-  requireChainModule(impl: string): any {
-    /* eslint @typescript-eslint/no-var-requires: "off" */
-    return require(`./chains/${impl}`);
+  requireChainImpl(impl: string): any {
+    return checkIsDefined(IMPLS[impl]);
   }
 
   getInfo(chainCoin: string): Promise<ClientInfo> {
     return this.getClient(chainCoin).then((client) => client.getInfo());
   }
 
-  getAddress(chainCoin: string, address: string): Promise<AddressInfo> {
+  getAddresses(
+    chainCoin: string,
+    address: Array<string>,
+  ): Promise<Array<AddressInfo | undefined>> {
     return this.getClient(chainCoin).then((client) =>
-      client.getAddress(address),
+      client.getAddresses(address),
     );
   }
 
-  getBalance(
+  async getBalances(
     chainCoin: string,
-    address: string,
-    coin: CoinInfo,
-  ): Promise<BigNumber> {
+    requests: Array<{ address: string; coin: Partial<CoinInfo> }>,
+  ): Promise<Array<BigNumber | undefined>> {
     return this.getClient(chainCoin).then((client) =>
-      client.getBalance(address, coin),
+      client.getBalances(requests),
+    );
+  }
+
+  getTransactionStatuses(
+    chainCoin: string,
+    txids: Array<string>,
+  ): Promise<Array<TransactionStatus | undefined>> {
+    return this.getClient(chainCoin).then((client) =>
+      client.getTransactionStatuses(txids),
     );
   }
 
@@ -135,48 +153,21 @@ class ProviderController {
     );
   }
 
-  getTransactionStatus(
+  getTokenInfos(
     chainCoin: string,
-    txid: string,
-  ): Promise<TransactionStatus> {
+    tokenAddresses: Array<string>,
+  ): Promise<Array<PartialTokenInfo | undefined>> {
     return this.getClient(chainCoin).then((client) =>
-      client.getTransactionStatus(txid),
-    );
-  }
-
-  getTokenInfo(
-    chainCoin: string,
-    tokenAddresses: string[],
-  ): Promise<Array<TokenInfo | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
-      client.getTokenInfo(tokenAddresses),
-    );
-  }
-
-  async batchGetAddresses(
-    chainCoin: string,
-    addresses: string[],
-  ): Promise<Array<AddressInfo | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
-      client.batchGetAddresses(addresses),
+      client.getTokenInfos(tokenAddresses),
     );
   }
 
   getUTXOs(
     chainCoin: string,
     address: Array<string>,
-  ): Promise<{ [address: string]: UTXO }> {
+  ): Promise<{ [address: string]: Array<UTXO> }> {
     return this.getClient(chainCoin).then((provider) =>
       provider.getUTXOs(address),
-    );
-  }
-
-  async batchGetBalances(
-    chainCoin: string,
-    calls: ReadonlyArray<{ address: string; coin: CoinInfo }>,
-  ): Promise<Array<BigNumber | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
-      client.batchGetBalances(calls),
     );
   }
 
