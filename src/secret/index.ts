@@ -5,6 +5,7 @@ import {
   ExtendedKey,
 } from './bip32';
 import { BaseCurve, ed25519, nistp256, secp256k1 } from './curves';
+import * as encryptor from './encryptors/aes256';
 
 type CurveName = 'secp256k1' | 'nistp256' | 'ed25519';
 
@@ -64,33 +65,69 @@ function verify(
 
 function sign(
   curveName: CurveName,
-  privateKey: Buffer,
+  encryptedPrivateKey: Buffer,
   digest: Buffer,
+  password: string,
 ): Buffer {
-  return getCurveByName(curveName).sign(privateKey, digest);
+  return getCurveByName(curveName).sign(
+    encryptor.decrypt(password, encryptedPrivateKey),
+    digest,
+  );
 }
 
-function publicFromPrivate(curveName: CurveName, privateKey: Buffer): Buffer {
-  return getCurveByName(curveName).publicFromPrivate(privateKey);
+function publicFromPrivate(
+  curveName: CurveName,
+  encryptedPrivateKey: Buffer,
+  password: string,
+): Buffer {
+  return getCurveByName(curveName).publicFromPrivate(
+    encryptor.decrypt(password, encryptedPrivateKey),
+  );
 }
 
 function generateMasterKeyFromSeed(
   curveName: CurveName,
-  seed: Buffer,
+  encryptedSeed: Buffer,
+  password: string,
 ): ExtendedKey {
-  return getDeriverByCurveName(curveName).generateMasterKeyFromSeed(seed);
+  const deriver: Bip32KeyDeriver = getDeriverByCurveName(curveName);
+  const seed: Buffer = encryptor.decrypt(password, encryptedSeed);
+  const masterKey: ExtendedKey = deriver.generateMasterKeyFromSeed(seed);
+  return {
+    key: encryptor.encrypt(password, masterKey.key),
+    chainCode: masterKey.chainCode,
+  };
 }
 
-function N(curveName: CurveName, extPriv: ExtendedKey): ExtendedKey {
-  return getDeriverByCurveName(curveName).N(extPriv);
+function N(
+  curveName: CurveName,
+  encryptedExtPriv: ExtendedKey,
+  password: string,
+): ExtendedKey {
+  const deriver: Bip32KeyDeriver = getDeriverByCurveName(curveName);
+  const extPriv: ExtendedKey = {
+    key: encryptor.decrypt(password, encryptedExtPriv.key),
+    chainCode: encryptedExtPriv.chainCode,
+  };
+  return deriver.N(extPriv);
 }
 
 function CKDPriv(
   curveName: CurveName,
-  parent: ExtendedKey,
+  encryptedParent: ExtendedKey,
   index: number,
+  password: string,
 ): ExtendedKey {
-  return getDeriverByCurveName(curveName).CKDPriv(parent, index);
+  const deriver: Bip32KeyDeriver = getDeriverByCurveName(curveName);
+  const parent: ExtendedKey = {
+    key: encryptor.decrypt(password, encryptedParent.key),
+    chainCode: encryptedParent.chainCode,
+  };
+  const child: ExtendedKey = deriver.CKDPriv(parent, index);
+  return {
+    key: encryptor.encrypt(password, child.key),
+    chainCode: child.chainCode,
+  };
 }
 
 function CKDPub(

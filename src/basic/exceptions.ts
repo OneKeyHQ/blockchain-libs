@@ -1,3 +1,5 @@
 class NotImplementedError extends Error {}
 
-export { NotImplementedError };
+class IncorrectPassword extends Error {}
+
+export { NotImplementedError, IncorrectPassword };
