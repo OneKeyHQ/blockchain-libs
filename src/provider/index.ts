@@ -23,21 +23,21 @@ const IMPLS: { [key: string]: any } = {
 };
 
 class ProviderController {
-  private clientsCache: { [chainCoin: string]: Array<BaseClient> } = {};
-  private lastClientCache: { [chainCoin: string]: [BaseClient, number] } = {};
+  private clientsCache: { [chainCode: string]: Array<BaseClient> } = {};
+  private lastClientCache: { [chainCode: string]: [BaseClient, number] } = {};
 
-  chainSelector: (chainCoin: string) => ChainInfo;
+  chainSelector: (chainCode: string) => ChainInfo;
 
-  constructor(chainSelector: (chainCoin: string) => ChainInfo) {
+  constructor(chainSelector: (chainCode: string) => ChainInfo) {
     this.chainSelector = chainSelector;
   }
 
   async getClient(
-    chainCoin: string,
+    chainCode: string,
     filter?: ClientFilter,
   ): Promise<BaseClient> {
     filter = filter || (() => true);
-    const [lastClient, expiredAt] = this.lastClientCache[chainCoin] || [];
+    const [lastClient, expiredAt] = this.lastClientCache[chainCode] || [];
 
     if (
       typeof lastClient !== undefined &&
@@ -47,10 +47,10 @@ class ProviderController {
       return Promise.resolve(lastClient);
     }
 
-    let clients = this.clientsCache[chainCoin];
+    let clients = this.clientsCache[chainCode];
 
     if (!clients || clients.length === 0) {
-      const chainInfo = this.chainSelector(chainCoin);
+      const chainInfo = this.chainSelector(chainCode);
 
       const module: any = this.requireChainImpl(chainInfo.impl);
       clients = chainInfo.clients
@@ -61,7 +61,7 @@ class ProviderController {
       for (const client of clients) {
         client.setChainInfo(chainInfo);
       }
-      this.clientsCache[chainCoin] = clients;
+      this.clientsCache[chainCode] = clients;
     }
 
     let client: BaseClient | undefined = undefined;
@@ -91,17 +91,17 @@ class ProviderController {
       throw Error('No available client');
     }
 
-    this.lastClientCache[chainCoin] = [client, Date.now() + 300000]; // Expired at 5 minutes
+    this.lastClientCache[chainCode] = [client, Date.now() + 300000]; // Expired at 5 minutes
     return client;
   }
 
-  getProvider(chainCoin: string): Promise<BaseProvider> {
-    const chainInfo = this.chainSelector(chainCoin);
+  getProvider(chainCode: string): Promise<BaseProvider> {
+    const chainInfo = this.chainSelector(chainCode);
     const { Provider } = this.requireChainImpl(chainInfo.impl);
 
     return Promise.resolve(
       new Provider(chainInfo, (filter?: ClientFilter) =>
-        this.getClient(chainCoin, filter),
+        this.getClient(chainCode, filter),
       ),
     );
   }
@@ -110,132 +110,132 @@ class ProviderController {
     return checkIsDefined(IMPLS[impl]);
   }
 
-  getInfo(chainCoin: string): Promise<ClientInfo> {
-    return this.getClient(chainCoin).then((client) => client.getInfo());
+  getInfo(chainCode: string): Promise<ClientInfo> {
+    return this.getClient(chainCode).then((client) => client.getInfo());
   }
 
   getAddresses(
-    chainCoin: string,
+    chainCode: string,
     address: Array<string>,
   ): Promise<Array<AddressInfo | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
+    return this.getClient(chainCode).then((client) =>
       client.getAddresses(address),
     );
   }
 
   async getBalances(
-    chainCoin: string,
+    chainCode: string,
     requests: Array<{ address: string; coin: Partial<CoinInfo> }>,
   ): Promise<Array<BigNumber | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
+    return this.getClient(chainCode).then((client) =>
       client.getBalances(requests),
     );
   }
 
   getTransactionStatuses(
-    chainCoin: string,
+    chainCode: string,
     txids: Array<string>,
   ): Promise<Array<TransactionStatus | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
+    return this.getClient(chainCode).then((client) =>
       client.getTransactionStatuses(txids),
     );
   }
 
-  getFeePricePerUnit(chainCoin: string): Promise<FeePricePerUnit> {
-    return this.getClient(chainCoin).then((client) =>
+  getFeePricePerUnit(chainCode: string): Promise<FeePricePerUnit> {
+    return this.getClient(chainCode).then((client) =>
       client.getFeePricePerUnit(),
     );
   }
 
-  broadcastTransaction(chainCoin: string, rawTx: string): Promise<boolean> {
-    return this.getClient(chainCoin).then((client) =>
+  broadcastTransaction(chainCode: string, rawTx: string): Promise<boolean> {
+    return this.getClient(chainCode).then((client) =>
       client.broadcastTransaction(rawTx),
     );
   }
 
   getTokenInfos(
-    chainCoin: string,
+    chainCode: string,
     tokenAddresses: Array<string>,
   ): Promise<Array<PartialTokenInfo | undefined>> {
-    return this.getClient(chainCoin).then((client) =>
+    return this.getClient(chainCode).then((client) =>
       client.getTokenInfos(tokenAddresses),
     );
   }
 
   getUTXOs(
-    chainCoin: string,
+    chainCode: string,
     address: Array<string>,
   ): Promise<{ [address: string]: Array<UTXO> }> {
-    return this.getClient(chainCoin).then((provider) =>
+    return this.getClient(chainCode).then((provider) =>
       provider.getUTXOs(address),
     );
   }
 
   buildUnsignedTx(
-    chainCoin: string,
+    chainCode: string,
     unsignedTx: UnsignedTx,
   ): Promise<UnsignedTx> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.buildUnsignedTx(unsignedTx),
     );
   }
 
   pubkeyToAddress(
-    chainCoin: string,
+    chainCode: string,
     verifier: Verifier,
     encoding: string | undefined,
   ): Promise<string> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.pubkeyToAddress(verifier, encoding),
     );
   }
 
   signTransaction(
-    chainCoin: string,
+    chainCode: string,
     unsignedTx: UnsignedTx,
     signers: { [p: string]: Signer },
   ): Promise<SignedTx> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.signTransaction(unsignedTx, signers),
     );
   }
 
   verifyAddress(
-    chainCoin: string,
+    chainCode: string,
     address: string,
   ): Promise<AddressValidation> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.verifyAddress(address),
     );
   }
 
   verifyTokenAddress(
-    chainCoin: string,
+    chainCode: string,
     address: string,
   ): Promise<AddressValidation> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.verifyTokenAddress(address),
     );
   }
 
   signMessage(
-    chainCoin: string,
+    chainCode: string,
     message: string,
     signer: Signer,
     address?: string,
   ): Promise<string> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.signMessage(message, signer, address),
     );
   }
 
   verifyMessage(
-    chainCoin: string,
+    chainCode: string,
     address: string,
     message: string,
     signature: string,
   ): Promise<boolean> {
-    return this.getProvider(chainCoin).then((provider) =>
+    return this.getProvider(chainCode).then((provider) =>
       provider.verifyMessage(address, message, signature),
     );
   }

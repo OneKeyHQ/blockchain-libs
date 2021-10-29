@@ -1,6 +1,6 @@
 type ChainInfo = {
   code: string;
-  feeCoin: string;
+  feeCode: string;
   impl: string;
   implOptions: { [key: string]: any };
   clients: Array<{ name: string; args: Array<any> }>;
@@ -8,7 +8,7 @@ type ChainInfo = {
 
 type CoinInfo = {
   code: string;
-  chainCoin: string;
+  chainCode: string;
   decimals: number;
   tokenAddress?: string;
 };
