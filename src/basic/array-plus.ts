@@ -13,4 +13,14 @@ const groupBy = <K extends keyof any, T>(
   }, {} as Record<K, Array<T>>);
 };
 
-export { groupBy };
+const chunked = <T>(array: Array<T>, size: number): Array<Array<T>> => {
+  const chunks = [];
+
+  for (let i = 0, count = array.length; i < count; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+
+  return chunks;
+};
+
+export { groupBy, chunked };
