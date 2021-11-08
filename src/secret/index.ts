@@ -4,6 +4,11 @@ import {
   ED25519Bip32KeyDeriver,
   ExtendedKey,
 } from './bip32';
+import {
+  mnemonicToRevealableSeed,
+  RevealableSeed,
+  revealEntropy,
+} from './bip39';
 import { BaseCurve, ed25519, nistp256, secp256k1 } from './curves';
 import * as encryptor from './encryptors/aes256';
 
@@ -138,6 +143,28 @@ function CKDPub(
   return getDeriverByCurveName(curveName).CKDPub(parent, index);
 }
 
+function revealableSeedFromMnemonic(
+  mnemonic: string,
+  password: string,
+  passphrase?: string,
+): RevealableSeed {
+  const rs: RevealableSeed = mnemonicToRevealableSeed(mnemonic, passphrase);
+  return {
+    entropyWithLangPrefixed: encryptor.encrypt(
+      password,
+      rs.entropyWithLangPrefixed,
+    ),
+    seed: encryptor.encrypt(password, rs.seed),
+  };
+}
+
+function mnemonicFromEntropy(
+  encryptedEntropy: Buffer,
+  password: string,
+): string {
+  return revealEntropy(encryptor.decrypt(password, encryptedEntropy));
+}
+
 export {
   CurveName,
   ExtendedKey,
@@ -148,4 +175,7 @@ export {
   N,
   CKDPriv,
   CKDPub,
+  RevealableSeed,
+  revealableSeedFromMnemonic,
+  mnemonicFromEntropy,
 };
