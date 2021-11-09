@@ -261,6 +261,14 @@ class Geth extends BaseClient {
 
     return code.length > 0;
   }
+
+  async batchEthCall(
+    calls: Array<{ to: string; data: string }>,
+  ): Promise<Array<string>> {
+    return this.rpc.batchCall(
+      calls.map((i) => ['eth_call', [i, Geth.__LAST_BLOCK__]]),
+    );
+  }
 }
 
 export { Geth };
