@@ -90,7 +90,7 @@ class Provider extends BaseProvider {
 
   async pubkeyToAddress(
     verifier: Verifier,
-    encoding?: string | undefined,
+    encoding?: string,
   ): Promise<string> {
     const pubkeyBytes = await verifier.getPubkey();
     const address = new PublicKey(pubkeyBytes).toBase58();

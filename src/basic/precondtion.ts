@@ -2,16 +2,12 @@ type ErrorType = undefined | string | Error;
 
 const check = (statement: any, orError?: ErrorType) => {
   if (!statement) {
-    if (typeof orError === 'string') {
-      throw new Error(orError);
-    }
     orError = orError ? orError : 'Invalid statement';
     orError = orError instanceof Error ? orError : new Error(orError);
 
     throw orError;
   }
 };
-
 const checkIsDefined = <T>(something?: T, orError?: ErrorType): T => {
   check(
     typeof something !== 'undefined',

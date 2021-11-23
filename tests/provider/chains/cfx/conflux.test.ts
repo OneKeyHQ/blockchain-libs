@@ -153,23 +153,18 @@ test('getTransactionStatuses', async () => {
     TransactionStatus.PENDING,
   ]);
 
-  expect(mockedRPC.batchCall).toHaveBeenCalledWith(
-    [
-      ['cfx_getTransactionByHash', ['0x01']],
-      ['cfx_getTransactionReceipt', ['0x01']],
-      ['cfx_getTransactionByHash', ['0x02']],
-      ['cfx_getTransactionReceipt', ['0x02']],
-      ['cfx_getTransactionByHash', ['0x03']],
-      ['cfx_getTransactionReceipt', ['0x03']],
-      ['cfx_getTransactionByHash', ['0x04']],
-      ['cfx_getTransactionReceipt', ['0x04']],
-      ['cfx_getTransactionByHash', ['0x05']],
-      ['cfx_getTransactionReceipt', ['0x05']],
-    ],
-    undefined,
-    undefined,
-    true,
-  );
+  expect(mockedRPC.batchCall).toHaveBeenCalledWith([
+    ['cfx_getTransactionByHash', ['0x01']],
+    ['cfx_getTransactionReceipt', ['0x01']],
+    ['cfx_getTransactionByHash', ['0x02']],
+    ['cfx_getTransactionReceipt', ['0x02']],
+    ['cfx_getTransactionByHash', ['0x03']],
+    ['cfx_getTransactionReceipt', ['0x03']],
+    ['cfx_getTransactionByHash', ['0x04']],
+    ['cfx_getTransactionReceipt', ['0x04']],
+    ['cfx_getTransactionByHash', ['0x05']],
+    ['cfx_getTransactionReceipt', ['0x05']],
+  ]);
 });
 
 test('getTokenInfos', async () => {
@@ -213,167 +208,162 @@ test('getTokenInfos', async () => {
     { symbol: 'TE', name: 'TokenE', decimals: 8 },
   ]);
 
-  expect(mockedRPC.batchCall).toHaveBeenCalledWith(
+  expect(mockedRPC.batchCall).toHaveBeenCalledWith([
     [
+      'cfx_call',
       [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
-            data: '0x95d89b41',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
-            data: '0x06fdde03',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
-            data: '0x313ce567',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
-            data: '0x95d89b41',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
-            data: '0x06fdde03',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
-            data: '0x313ce567',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
-            data: '0x95d89b41',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
-            data: '0x06fdde03',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
-            data: '0x313ce567',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
-            data: '0x95d89b41',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
-            data: '0x06fdde03',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
-            data: '0x313ce567',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
-            data: '0x95d89b41',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
-            data: '0x06fdde03',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
-      ],
-      [
-        'cfx_call',
-        [
-          {
-            to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
-            data: '0x313ce567',
-          },
-          Conflux.__EPOCH_TAG__,
-        ],
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
+          data: '0x95d89b41',
+        },
+        Conflux.__EPOCH_TAG__,
       ],
     ],
-    undefined,
-    undefined,
-    true,
-  );
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
+          data: '0x06fdde03',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee1',
+          data: '0x313ce567',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
+          data: '0x95d89b41',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
+          data: '0x06fdde03',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee2',
+          data: '0x313ce567',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
+          data: '0x95d89b41',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
+          data: '0x06fdde03',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee3',
+          data: '0x313ce567',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
+          data: '0x95d89b41',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
+          data: '0x06fdde03',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee4',
+          data: '0x313ce567',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
+          data: '0x95d89b41',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
+          data: '0x06fdde03',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+    [
+      'cfx_call',
+      [
+        {
+          to: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee5',
+          data: '0x313ce567',
+        },
+        Conflux.__EPOCH_TAG__,
+      ],
+    ],
+  ]);
 });
 
 test('getFeePricePerUnit', async () => {

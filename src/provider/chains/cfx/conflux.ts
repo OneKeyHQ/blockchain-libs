@@ -30,8 +30,8 @@ class Conflux extends BaseClient {
       Conflux.__EPOCH_TAG__,
       false,
     ]);
-    const bestBlockNumber = parseInt(latestBlock.epochNumber, 16);
-    const isReady = !isNaN(bestBlockNumber) && bestBlockNumber > 0;
+    const bestBlockNumber = Number(latestBlock.epochNumber);
+    const isReady = Number.isInteger(bestBlockNumber) && bestBlockNumber > 0;
 
     return { bestBlockNumber, isReady };
   }
@@ -128,12 +128,7 @@ class Conflux extends BaseClient {
       return acc;
     }, []);
 
-    const resp: Array<any> = await this.rpc.batchCall(
-      calls,
-      undefined,
-      undefined,
-      true,
-    );
+    const resp: Array<any> = await this.rpc.batchCall(calls);
 
     const result = [];
     for (let i = 0, count = resp.length; i < count; i += 2) {
@@ -171,12 +166,7 @@ class Conflux extends BaseClient {
       return acc;
     }, []);
 
-    const resp: Array<any> = await this.rpc.batchCall(
-      calls,
-      undefined,
-      undefined,
-      true,
-    );
+    const resp: Array<any> = await this.rpc.batchCall(calls);
     const tokens: Array<PartialTokenInfo | undefined> = [];
 
     for (let i = 0, count = resp.length; i < count; i += 3) {

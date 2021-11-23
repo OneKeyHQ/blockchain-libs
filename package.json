@@ -60,7 +60,7 @@
     "elliptic": "^6.5.4",
     "hi-base32": "^0.5.1",
     "timeout-signal": "^1.1.0",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
     "js-conflux-sdk": "^1.7.1",
     "timeout-signal": "^1.1.0"
   },

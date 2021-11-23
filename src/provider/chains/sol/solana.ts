@@ -11,6 +11,20 @@ import {
 } from '../../../types/provider';
 import { BaseClient } from '../../abc';
 
+enum RPC_METHODS {
+  SEND_TRANSACTION = 'sendTransaction',
+  GET_EPOCH_INFO = 'getEpochInfo',
+  GET_HEALTH = 'getHealth',
+  GET_ACCOUNT_INFO = 'getAccountInfo',
+  GET_TOKEN_ACCOUNTS_BY_OWNER = 'getTokenAccountsByOwner',
+  GET_FEES = 'getFees',
+  GET_TRANSACTION = 'getTransaction',
+}
+enum PARAMS_ENCODINGS {
+  BASE64 = 'base64',
+  JSON_PARSED = 'jsonParsed',
+}
+
 class Solana extends BaseClient {
   readonly rpc: JsonRPCRequest;
   constructor(url: string) {
@@ -20,7 +34,10 @@ class Solana extends BaseClient {
   async broadcastTransaction(rawTx: string): Promise<boolean> {
     let isSuccess = true;
     try {
-      this.rpc.call('sendTransaction', [rawTx, { encoding: 'base64' }]);
+      this.rpc.call(RPC_METHODS.SEND_TRANSACTION, [
+        rawTx,
+        { encoding: PARAMS_ENCODINGS.BASE64 },
+      ]);
     } catch (error) {
       isSuccess = false;
     }
@@ -29,8 +46,8 @@ class Solana extends BaseClient {
 
   async getInfo(): Promise<ClientInfo> {
     const [epochInfo, ok] = await this.rpc.batchCall([
-      ['getEpochInfo', []],
-      ['getHealth', []],
+      [RPC_METHODS.GET_EPOCH_INFO, []],
+      [RPC_METHODS.GET_HEALTH, []],
     ]);
     const slot = epochInfo.absoluteSlot;
     const isReady = ok === 'ok';
@@ -44,23 +61,19 @@ class Solana extends BaseClient {
     addresses: string[],
   ): Promise<Array<AddressInfo | undefined>> {
     const calls: Array<any> = addresses.map((address) => [
-      'getAccountInfo',
-      [address, { encoding: 'jsonParsed' }],
+      RPC_METHODS.GET_ACCOUNT_INFO,
+      [address, { encoding: PARAMS_ENCODINGS.JSON_PARSED }],
     ]);
     const resp: Array<{ [key: string]: any } | undefined> =
       await this.rpc.batchCall(calls);
     const result: Array<AddressInfo | undefined> = [];
     for (const accountInfo of resp) {
-      let balance = new BigNumber(0);
-      let existing = false;
       if (typeof accountInfo !== 'undefined') {
-        if (accountInfo?.value !== null) {
-          balance = new BigNumber(accountInfo.value.lamports);
-          existing = true;
-        }
+        const balance = new BigNumber(accountInfo?.value?.lamports);
+        const existing = balance.isFinite() && balance.gte(0);
         result.push({
-          balance,
           existing,
+          balance: existing ? balance : new BigNumber(0),
         });
       } else {
         result.push(undefined);
@@ -75,14 +88,17 @@ class Solana extends BaseClient {
     const calls: Array<any> = requests.map((request) =>
       request.coin?.tokenAddress
         ? [
-            'getTokenAccountsByOwner',
+            RPC_METHODS.GET_TOKEN_ACCOUNTS_BY_OWNER,
             [
               request.address,
               { mint: request.coin.tokenAddress },
-              { encoding: 'jsonParsed' },
+              { encoding: PARAMS_ENCODINGS.JSON_PARSED },
             ],
           ]
-        : ['getAccountInfo', [request.address, { encoding: 'jsonParsed' }]],
+        : [
+            RPC_METHODS.GET_ACCOUNT_INFO,
+            [request.address, { encoding: PARAMS_ENCODINGS.JSON_PARSED }],
+          ],
     );
     const resps: Array<{ [key: string]: any } | undefined> =
       await this.rpc.batchCall(calls);
@@ -116,8 +132,8 @@ class Solana extends BaseClient {
     address: string,
   ): Promise<{ [key: string]: any } | null> {
     const response: { [key: string]: any } = await this.rpc.call(
-      'getAccountInfo',
-      [address, { encoding: 'jsonParsed' }],
+      RPC_METHODS.GET_ACCOUNT_INFO,
+      [address, { encoding: PARAMS_ENCODINGS.JSON_PARSED }],
     );
     return response.value;
   }
@@ -132,7 +148,9 @@ class Solana extends BaseClient {
   }
 
   async getFees(): Promise<[number, string]> {
-    const feeInfo: { [key: string]: any } = await this.rpc.call('getFees');
+    const feeInfo: { [key: string]: any } = await this.rpc.call(
+      RPC_METHODS.GET_FEES,
+    );
     const feePerSig = feeInfo.value.feeCalculator.lamportsPerSignature;
     const recentBlockhash = feeInfo.value.blockhash;
     return [feePerSig, recentBlockhash];
@@ -142,8 +160,8 @@ class Solana extends BaseClient {
     txids: string[],
   ): Promise<Array<TransactionStatus | undefined>> {
     const calls: Array<any> = txids.map((txid) => [
-      'getTransaction',
-      [txid, 'jsonParsed'],
+      RPC_METHODS.GET_TRANSACTION,
+      [txid, PARAMS_ENCODINGS.JSON_PARSED],
     ]);
     const result = [];
     const resp: Array<{ [key: string]: any } | undefined> =
@@ -170,8 +188,8 @@ class Solana extends BaseClient {
     tokenAddresses: Array<string>,
   ): Promise<Array<PartialTokenInfo | undefined>> {
     const calls: any = tokenAddresses.map((address) => [
-      'getAccountInfo',
-      [address, { encoding: 'jsonParsed' }],
+      RPC_METHODS.GET_ACCOUNT_INFO,
+      [address, { encoding: PARAMS_ENCODINGS.JSON_PARSED }],
     ]);
     const resp: Array<{ [key: string]: any } | undefined> =
       await this.rpc.batchCall(calls);
