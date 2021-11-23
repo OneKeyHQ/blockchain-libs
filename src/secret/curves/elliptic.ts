@@ -1,6 +1,6 @@
 import elliptic from 'elliptic';
 
-import { parse256, ser256 } from '../bip32';
+import { parse256 } from '../bip32';
 
 import { BaseCurve, CurveForKD } from './base';
 

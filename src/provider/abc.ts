@@ -69,7 +69,7 @@ abstract class BaseProvider {
 
   abstract pubkeyToAddress(
     verifier: Verifier,
-    encoding: string | undefined,
+    encoding?: string | undefined,
   ): Promise<string>;
 
   abstract verifyAddress(address: string): Promise<AddressValidation>;

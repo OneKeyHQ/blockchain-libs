@@ -61,7 +61,7 @@ class JsonRPCRequest {
 
   async call<T>(
     method: string,
-    params: JsonRpcParams,
+    params?: JsonRpcParams,
     headers?: Record<string, string>,
     timeout?: number,
   ): Promise<T> {
