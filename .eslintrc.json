@@ -33,7 +33,8 @@
       { "allowWholeFile": true }
     ],
     "@typescript-eslint/no-unused-vars": "off",
-    "eslint-comments/no-unused-disable": "error",
+    "eslint-comments/no-unused-disable": "off",
+    "@typescript-eslint/ban-types": "off",
     "import/order": [
       "error",
       { "newlines-between": "always", "alphabetize": { "order": "asc" } }

@@ -55,7 +55,7 @@ class RestfulRequest {
 
   async post(
     path: string,
-    data?: Record<string, any>,
+    data?: Record<string, any> | string,
     json = false,
     headers?: Record<string, string>,
     timeout?: number,
@@ -66,9 +66,12 @@ class RestfulRequest {
     }
 
     const url = this.buildUrl(path);
-    const body = json
-      ? JSON.stringify(data)
-      : new URLSearchParams(data).toString();
+    const body =
+      typeof data === 'object'
+        ? json
+          ? JSON.stringify(data)
+          : new URLSearchParams(data).toString()
+        : data;
 
     const response = await fetch(url.toString(), {
       method: 'POST',
