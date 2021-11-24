@@ -126,7 +126,7 @@ test('Assemble headers - POST', async () => {
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
     headers: { 'User-Agent': 'blockchain-libs', H1: '1', H2: '2-2', H3: '3' },
     method: 'POST',
-    body: '',
+    body: undefined,
     signal: expect.anything(),
   });
 });
