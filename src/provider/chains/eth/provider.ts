@@ -9,17 +9,35 @@ import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
 import { check, checkIsDefined } from '../../../basic/precondtion';
 import {
   AddressValidation,
+  FeePricePerUnit,
   SignedTx,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
+import { BlockNative } from './blocknative';
 import { Geth } from './geth';
 
 class Provider extends BaseProvider {
+  private _blockNative!: BlockNative;
+
+  get blockNative(): BlockNative {
+    check(this.chainId === 1, 'Only use block native for eth mainnet');
+
+    if (!this._blockNative) {
+      this._blockNative = new BlockNative();
+    }
+
+    return this._blockNative;
+  }
+
   get geth(): Promise<Geth> {
     return this.clientSelector((i) => i instanceof Geth);
+  }
+
+  get chainId(): number {
+    return Number(this.chainInfo?.implOptions?.chainId);
   }
 
   verifyAddress(address: string): Promise<AddressValidation> {
@@ -102,11 +120,20 @@ class Provider extends BaseProvider {
       }
     }
 
-    const feePricePerUnit =
-      unsignedTx.feePricePerUnit ||
-      (await this.geth.then((client) => client.getFeePricePerUnit())).normal
-        .price;
     feeLimit = feeLimit || new BigNumber(21000);
+
+    let feePricePerUnit = unsignedTx.feePricePerUnit;
+    if (!feePricePerUnit) {
+      const feePrice = await this.getFeePriceInfo();
+      feePricePerUnit = feePrice.feePricePerUnit;
+
+      if (feePrice.maxFeePerGas && feePrice.maxPriorityFeePerGas) {
+        Object.assign(payload, {
+          maxFeePerGas: feePrice.maxFeePerGas,
+          maxPriorityFeePerGas: feePrice.maxPriorityFeePerGas,
+        });
+      }
+    }
 
     return Object.assign(unsignedTx, {
       inputs: input ? [input] : [],
@@ -116,6 +143,40 @@ class Provider extends BaseProvider {
       feePricePerUnit,
       payload,
     });
+  }
+
+  async getFeePriceInfo(): Promise<{
+    feePricePerUnit: BigNumber;
+    maxPriorityFeePerGas: BigNumber | undefined;
+    maxFeePerGas: BigNumber | undefined;
+  }> {
+    let fee: FeePricePerUnit | undefined = undefined;
+
+    if (
+      this.chainId === 1 &&
+      this.chainInfo?.implOptions?.EIP1559Enabled === true
+    ) {
+      try {
+        fee = await this.blockNative.getFeePricePerUnit();
+      } catch (e) {
+        console.error('Error in get fee from block native. error: ', e);
+      }
+    }
+
+    if (typeof fee === 'undefined') {
+      fee = await this.geth.then((i) => i.getFeePricePerUnit());
+    }
+
+    if (fee === undefined) {
+      throw new Error('Illegal State');
+    }
+
+    const normal = fee.normal;
+    return {
+      feePricePerUnit: normal.price,
+      maxPriorityFeePerGas: normal.payload?.maxPriorityFeePerGas,
+      maxFeePerGas: normal.payload?.maxFeePerGas,
+    };
   }
 
   async signTransaction(
@@ -148,15 +209,34 @@ class Provider extends BaseProvider {
     const toAddress = isERC20Transfer ? output.tokenAddress : output.address;
     const value = isERC20Transfer ? '0x00' : toBigIntHex(output.value);
 
-    return {
+    const baseTx = {
       to: toAddress,
       value,
       gasLimit: toBigIntHex(checkIsDefined(unsignedTx.feeLimit)),
-      gasPrice: toBigIntHex(checkIsDefined(unsignedTx.feePricePerUnit)),
       nonce: checkIsDefined(unsignedTx.nonce),
       data: unsignedTx.payload?.data || '0x',
       chainId: parseInt(checkIsDefined(this.chainInfo.implOptions.chainId)),
     };
+
+    if (unsignedTx.payload?.EIP1559Enabled === true) {
+      Object.assign(baseTx, {
+        type: 2,
+        maxFeePerGas: toBigIntHex(
+          new BigNumber(checkIsDefined(unsignedTx.payload?.maxFeePerGas)),
+        ),
+        maxPriorityFeePerGas: toBigIntHex(
+          new BigNumber(
+            checkIsDefined(unsignedTx.payload?.maxPriorityFeePerGas),
+          ),
+        ),
+      });
+    } else {
+      Object.assign(baseTx, {
+        gasPrice: toBigIntHex(checkIsDefined(unsignedTx.feePricePerUnit)),
+      });
+    }
+
+    return baseTx;
   }
 }
 

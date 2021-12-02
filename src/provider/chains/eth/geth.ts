@@ -14,6 +14,8 @@ import {
 } from '../../../types/provider';
 import { BaseClient } from '../../abc';
 
+import * as EIP1559Fee from './sdk/eip1559-fee';
+
 class Geth extends BaseClient {
   static readonly __LAST_BLOCK__ = 'latest';
   readonly rpc: JsonRPCRequest;
@@ -215,15 +217,54 @@ class Geth extends BaseClient {
     const gasPrice = fromBigIntHex(gasPriceHex);
 
     const slow =
-      !gasPrice.isNaN() && gasPrice.gt(1) ? gasPrice : new BigNumber(1);
+      gasPrice.isFinite() && gasPrice.gt(1) ? gasPrice : new BigNumber(1);
     const normal = slow.multipliedBy(1.25).integerValue(BigNumber.ROUND_CEIL);
     const fast = normal.multipliedBy(1.2).integerValue(BigNumber.ROUND_CEIL); // 1.25 * 1.2 = 1.5
 
-    return {
+    const fee: any = {
       normal: { price: normal, waitingBlock: 4 },
       others: [
         { price: slow, waitingBlock: 40 },
         { price: fast, waitingBlock: 1 },
+      ],
+    };
+
+    if (this.chainInfo?.implOptions?.EIP1559Enabled === true) {
+      const eip1559Fee = await this.getFeePriceForEIP1559();
+      fee.normal.payload = eip1559Fee.normal.payload;
+      fee.others[0].payload = eip1559Fee.others?.[0].payload;
+      fee.others[1].payload = eip1559Fee.others?.[1].payload;
+    }
+
+    return fee;
+  }
+
+  async getFeePriceForEIP1559(): Promise<FeePricePerUnit> {
+    const [latestBlock, feeHistory] = await this.rpc.batchCall([
+      ['eth_getBlockByNumber', ['latest', false]],
+      ['eth_feeHistory', [10, 'latest', [5]]],
+    ]);
+    const baseFee = new BigNumber(latestBlock.baseFeePerGas);
+    const fast = EIP1559Fee.estimateFee(baseFee, feeHistory);
+    const normal = {
+      maxFeePerGas: fast.maxFeePerGas.multipliedBy(0.8),
+      maxPriorityFeePerGas: fast.maxPriorityFeePerGas.multipliedBy(0.8),
+    };
+    const slow = {
+      maxFeePerGas: fast.maxFeePerGas.multipliedBy(0.5),
+      maxPriorityFeePerGas: fast.maxPriorityFeePerGas.multipliedBy(0.5),
+    };
+
+    const placeholder = new BigNumber(0);
+    return {
+      normal: {
+        price: placeholder,
+        waitingBlock: 1,
+        payload: normal,
+      },
+      others: [
+        { price: placeholder, waitingBlock: 40, payload: slow },
+        { price: placeholder, waitingBlock: 1, payload: fast },
       ],
     };
   }

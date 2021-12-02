@@ -362,3 +362,46 @@ test('signTransaction with token', async () => {
       '0xf8a98085174876e80082e03194a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4880b844a9059cbb000000000000000000000000a305fab8bda7e1638235b054889b3217441dd64500000000000000000000000000000000000000000000000000000003110c5a4f26a0ff00510948d652626624d8f518309a66f7ec2149da47735f378e90c267c579f8a022afc54c308fcddd4a19b313ecf03be9ee328e670e9109f141902dd89e43aaf7',
   });
 });
+
+test('signTransaction EIP1559', async () => {
+  const signer: any = { sign: jest.fn() };
+  signer.sign.mockResolvedValueOnce([
+    Buffer.from(
+      '77076614d925b9bc70d3c1c0d04a98962c605b94812b0703af640bbdaa9529e25cedb3f7dd6580f280e8f078c6b51ebfb966d2c48085e36b34da8778fbfc0121',
+      'hex',
+    ),
+    1,
+  ]);
+
+  await expect(
+    provider.signTransaction(
+      {
+        inputs: [
+          {
+            address: '0x1ad91ee08f21be3de0ba2ba6918e714da6b45836',
+            value: new BigNumber('0x01809587ac41aa00'),
+          },
+        ],
+        outputs: [
+          {
+            address: '0xd60dd882028ecd3be2bd2bdc9d116ca28ff1033b',
+            value: new BigNumber('0x01809587ac41aa00'),
+          },
+        ],
+        nonce: 2727821,
+        feeLimit: new BigNumber('0x0186a0'),
+        feePricePerUnit: undefined,
+        payload: {
+          EIP1559Enabled: true,
+          maxPriorityFeePerGas: '0x3b9aca00',
+          maxFeePerGas: '0x159e792961',
+        },
+      },
+      { '0x1ad91ee08f21be3de0ba2ba6918e714da6b45836': signer },
+    ),
+  ).resolves.toStrictEqual({
+    txid: '0xd4ae4596acdc5a2e0df5d845fd64dbfe45146cbb441b488ea500161fe3f92e36',
+    rawTx:
+      '0x02f8770183299f8d843b9aca0085159e792961830186a094d60dd882028ecd3be2bd2bdc9d116ca28ff1033b8801809587ac41aa0080c001a077076614d925b9bc70d3c1c0d04a98962c605b94812b0703af640bbdaa9529e2a05cedb3f7dd6580f280e8f078c6b51ebfb966d2c48085e36b34da8778fbfc0121',
+  });
+});
