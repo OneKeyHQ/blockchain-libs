@@ -40,6 +40,7 @@ enum TransactionStatus {
 type EstimatedPrice = {
   price: BigNumber;
   waitingBlock?: number;
+  payload?: { [key: string]: any };
 };
 
 type FeePricePerUnit = {
