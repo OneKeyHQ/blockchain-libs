@@ -30,7 +30,7 @@
     "test": "run-s test:*",
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier --check .",
-    "unittest": "jest --coverage",
+    "unittest": "jest --coverage --silent",
     "prepack": "npm run build",
     "clean": "rimraf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz",
     "lint-staged": "lint-staged",
@@ -48,11 +48,14 @@
   "dependencies": {
     "@ethersproject/abi": "^5.4.1",
     "@ethersproject/transactions": "^5.4.0",
+    "algo-msgpack-with-bigint": "^2.1.1",
     "bignumber.js": "^9.0.1",
     "bip39": "^3.0.4",
     "cross-fetch": "^3.1.4",
     "elliptic": "^6.5.4",
-    "timeout-signal": "^1.1.0"
+    "hi-base32": "^0.5.1",
+    "timeout-signal": "^1.1.0",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",

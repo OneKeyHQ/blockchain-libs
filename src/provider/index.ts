@@ -20,6 +20,7 @@ import { BaseClient, BaseProvider, ClientFilter } from './abc';
 
 const IMPLS: { [key: string]: any } = {
   eth: require('./chains/eth'),
+  algo: require('./chains/algo'),
 };
 
 class ProviderController {

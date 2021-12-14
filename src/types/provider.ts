@@ -14,6 +14,7 @@ type AddressInfo = {
 enum TransactionStatus {
   NOT_FOUND = 0,
   PENDING = 1,
+  INVALID = 2,
   CONFIRM_AND_SUCCESS = 10,
   CONFIRM_BUT_FAILED = 11,
 }
