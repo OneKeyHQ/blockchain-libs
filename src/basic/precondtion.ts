@@ -8,7 +8,6 @@ const check = (statement: any, orError?: ErrorType) => {
     throw orError;
   }
 };
-
 const checkIsDefined = <T>(something?: T, orError?: ErrorType): T => {
   check(
     typeof something !== 'undefined',

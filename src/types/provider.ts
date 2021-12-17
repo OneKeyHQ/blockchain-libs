@@ -72,6 +72,7 @@ type TxInput = {
   value: BigNumber;
   tokenAddress?: string;
   utxo?: UTXO;
+  publicKey?: string; // used in stc
 };
 
 type TxOutput = {

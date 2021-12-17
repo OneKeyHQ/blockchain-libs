@@ -1,5 +1,5 @@
 interface Verifier {
-  getPubkey: (compressed: boolean) => Promise<Buffer>;
+  getPubkey: (compressed?: boolean) => Promise<Buffer>;
   verify: (digest: Buffer, signature: Buffer) => Promise<Buffer>;
 }
 

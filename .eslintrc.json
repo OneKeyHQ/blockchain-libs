@@ -14,7 +14,7 @@
     "jest.config.js",
     "jest-setup.js"
   ],
-  "plugins": ["import", "eslint-comments"],
+  "plugins": ["import", "eslint-comments", "unused-imports"],
   "extends": [
     "eslint:recommended",
     "plugin:eslint-comments/recommended",
@@ -42,6 +42,15 @@
     "sort-imports": [
       "error",
       { "ignoreDeclarationSort": true, "ignoreCase": true }
+    ],
+    "unused-imports/no-unused-imports": "error",
+    "unused-imports/no-unused-vars": [
+      "warn",
+      {
+        "vars": "all",
+        "varsIgnorePattern": "^_",
+        "args": "none"
+      }
     ]
   }
 }
