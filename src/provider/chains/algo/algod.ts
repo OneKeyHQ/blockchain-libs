@@ -12,13 +12,13 @@ import {
   FeePricePerUnit,
   TransactionStatus,
 } from '../../../types/provider';
-import { BaseClient } from '../../abc';
+import { BaseRestfulClient } from '../../abc';
 
 import { SuggestedParams } from './sdk';
 
 const ONE_MIN_IN_NANO_SECONDS = 60 * 1e9;
 
-class Algod extends BaseClient {
+class Algod extends BaseRestfulClient {
   readonly restful: RestfulRequest;
   private readonly _indexer?: RestfulRequest;
 
@@ -55,63 +55,39 @@ class Algod extends BaseClient {
     };
   }
 
-  async getAddresses(
-    addresses: Array<string>,
-  ): Promise<Array<AddressInfo | undefined>> {
-    const resp = await Promise.allSettled(
-      addresses.map((i) =>
-        this.restful.get(`/v2/accounts/${i}`).then((i) => i.json()),
-      ),
-    );
+  async getAddress(address: string): Promise<AddressInfo> {
+    const resp: any = await this.restful
+      .get(`/v2/accounts/${address}`)
+      .then((i) => i.json());
+    const balance = new BigNumber(resp.amount || 0);
+    const assets = resp.assets || [];
 
-    return resp.map((i) => {
-      if (i.status === 'fulfilled') {
-        const balance = new BigNumber(i.value.amount || 0);
-        const assets = i.value.assets || [];
-
-        if (balance.isFinite() && balance.gte(0)) {
-          return {
-            balance,
-            existing:
-              balance.gt(0) || (Array.isArray(assets) && assets.length > 0),
-          };
-        }
-      }
-
-      return undefined;
-    });
+    return {
+      balance,
+      existing: balance.gt(0) || (Array.isArray(assets) && assets.length > 0),
+    };
   }
 
-  async getBalances(
-    requests: Array<{ address: string; coin: Partial<CoinInfo> }>,
-  ): Promise<Array<BigNumber | undefined>> {
-    const resp = await Promise.allSettled(
-      requests.map((i) =>
-        this.restful.get(`/v2/accounts/${i.address}`).then((i) => i.json()),
-      ),
-    );
+  async getBalance(
+    address: string,
+    coin: Partial<CoinInfo>,
+  ): Promise<BigNumber> {
+    const resp: any = await this.restful
+      .get(`/v2/accounts/${address}`)
+      .then((i) => i.json());
 
-    return resp.map((i, index) => {
-      if (i.status === 'fulfilled') {
-        const request = requests[index];
-        let balance;
+    let balance: BigNumber;
 
-        if (typeof request.coin?.tokenAddress === 'undefined') {
-          balance = new BigNumber(i.value.amount || 0);
-        } else {
-          const targetAssetId = Number(request.coin.tokenAddress);
-          const assets: Array<any> = i.value.assets || [];
-          const asset = assets.find((i) => i['asset-id'] === targetAssetId);
-          balance = new BigNumber(asset?.amount || 0);
-        }
+    if (typeof coin?.tokenAddress === 'undefined') {
+      balance = new BigNumber(resp.amount || 0);
+    } else {
+      const targetAssetId = Number(coin.tokenAddress);
+      const assets: Array<any> = resp.assets || [];
+      const asset = assets.find((i) => i['asset-id'] === targetAssetId);
+      balance = new BigNumber(asset?.amount || 0);
+    }
 
-        if (balance && balance.isFinite() && balance.gte(0)) {
-          return balance;
-        }
-      }
-
-      return undefined;
-    });
+    return balance;
   }
 
   getFeePricePerUnit(): Promise<FeePricePerUnit> {
@@ -120,28 +96,26 @@ class Algod extends BaseClient {
     });
   }
 
-  async getTransactionStatuses(
-    txids: Array<string>,
-  ): Promise<Array<TransactionStatus | undefined>> {
+  async getTransactionStatus(txid: string): Promise<TransactionStatus> {
     const is404Error = (e: any) =>
       e instanceof ResponseError && e.response?.status === 404;
 
-    const statuses = await Promise.allSettled(
-      txids.map((i) =>
-        this.getPendingTransactionStatus(i) // in transaction pool or recently confirmed?
-          .catch((e) =>
-            is404Error(e)
-              ? this.getConfirmedTransactionStatus(i) // or has confirmed historically by indexer
-              : undefined,
-          )
-          .catch((e) =>
-            is404Error(e) ? TransactionStatus.NOT_FOUND : undefined,
-          ),
-      ),
-    );
-    return statuses.map((i) =>
-      i.status === 'fulfilled' ? i.value : undefined,
-    );
+    try {
+      return await this.getPendingTransactionStatus(txid);
+    } catch (e) {
+      if (is404Error(e)) {
+        try {
+          return await this.getConfirmedTransactionStatus(txid);
+        } catch (e) {
+          if (is404Error(e)) {
+            return TransactionStatus.NOT_FOUND;
+          }
+          throw e;
+        }
+      }
+
+      throw e;
+    }
   }
 
   async getPendingTransactionStatus(txid: string): Promise<TransactionStatus> {
