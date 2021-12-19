@@ -3,7 +3,7 @@ interface Verifier {
   verify: (digest: Buffer, signature: Buffer) => Promise<Buffer>;
 }
 
-interface Signer {
+interface Signer extends Verifier {
   sign: (digest: Buffer) => Promise<[Buffer, number]>;
   getPrvkey: () => Promise<Buffer>;
 }
