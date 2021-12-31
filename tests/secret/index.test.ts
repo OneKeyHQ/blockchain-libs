@@ -1,4 +1,5 @@
 import * as bip39 from 'bip39';
+import elliptic from 'elliptic';
 
 import { IncorrectPassword, InvalidMnemonic } from '../../src/basic/exceptions';
 import { decrypt, encrypt } from '../../src/secret/encryptors/aes256';
@@ -14,6 +15,21 @@ import {
   sign,
   verify,
 } from '../../src/secret/index';
+
+const halfNs: Record<string, bigint> = {
+  secp256k1: BigInt(new elliptic.ec('secp256k1').nh.toString()),
+  nistp256: BigInt(new elliptic.ec('p256').nh.toString()),
+};
+
+function isSignatureCanonical(curve: CurveName, signature: Buffer): boolean {
+  const halfN = halfNs[curve];
+  if (typeof halfN === 'undefined') {
+    // Not ecdsa.
+    return true;
+  }
+  const s = BigInt('0x' + signature.slice(32, 64).toString('hex'));
+  return s <= halfN;
+}
 
 const bip32TestVectors = [
   // Test vectors from SLIP-0010.
@@ -654,14 +670,12 @@ test('Basic signing & verifying tests', () => {
       encryptedExtPriv.key,
       password,
     );
-    expect(
-      verify(
-        curveName,
-        publicKey,
-        msgHash,
-        sign(curveName, encryptedExtPriv.key, msgHash, password),
-      ),
-    ).toStrictEqual(true);
+    const signature = sign(curveName, encryptedExtPriv.key, msgHash, password);
+    // Check signature is canonical, i.e., low S is enforced.
+    expect(isSignatureCanonical(curveName, signature)).toStrictEqual(true);
+    expect(verify(curveName, publicKey, msgHash, signature)).toStrictEqual(
+      true,
+    );
   }
 });
 
