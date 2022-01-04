@@ -33,7 +33,7 @@ class EllipticECWrapper implements CurveForKD {
   sign(privateKey: Buffer, digest: Buffer): Buffer {
     const signature: elliptic.ec.Signature = this.curve
       .keyFromPrivate(privateKey)
-      .sign(digest);
+      .sign(digest, { canonical: true });
     return Buffer.concat([
       signature.r.toBuffer('be', 32),
       signature.s.toBuffer('be', 32),
