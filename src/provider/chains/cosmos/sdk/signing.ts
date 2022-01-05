@@ -9,11 +9,13 @@ import {
   TxBody,
   TxRaw,
 } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
+import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1beta1/tx';
 import { Any } from 'cosmjs-types/google/protobuf/any';
 import Long from 'long';
 
 const MsgProtoRegistry = {
   '/cosmos.bank.v1beta1.MsgSend': MsgSend,
+  '/terra.wasm.v1beta1.MsgExecuteContract': MsgExecuteContract,
 };
 
 export type ProtoMsgObj = {
@@ -28,7 +30,7 @@ function makeTxBodyBytes(
     TxBody.fromPartial({
       ...body,
       messages: body.messages.map((msg) => {
-        const proto = MsgProtoRegistry[msg.typeUrl];
+        const proto = MsgProtoRegistry[msg.typeUrl] as any;
 
         return {
           typeUrl: msg.typeUrl,
@@ -167,6 +169,39 @@ export function makeMsgSend(
           denom: denom,
         },
       ],
+    },
+  };
+}
+
+function removeNull(obj: any): any {
+  if (obj !== null && typeof obj === 'object') {
+    return Object.entries(obj)
+      .filter(([, v]) => v != null)
+      .reduce(
+        (acc, [k, v]) => ({
+          ...acc,
+          [k]: v === Object(v) && !Array.isArray(v) ? removeNull(v) : v,
+        }),
+        {},
+      );
+  }
+
+  return obj;
+}
+
+export function makeMsgExecuteContract(
+  sender: string,
+  contract: string,
+  msg: object,
+  funds?: Array<Coin>,
+): ProtoMsgObj {
+  return {
+    typeUrl: '/terra.wasm.v1beta1.MsgExecuteContract',
+    value: {
+      sender,
+      contract,
+      msg: Buffer.from(JSON.stringify(removeNull(msg)), 'utf-8'),
+      funds: (funds ?? []).map((i) => Coin.encode(i).finish()),
     },
   };
 }

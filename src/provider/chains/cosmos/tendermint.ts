@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { BroadcastMode } from 'cosmjs-types/cosmos/tx/v1beta1/service';
 
+import { NotImplementedError } from '../../../basic/exceptions';
 import { checkIsDefined } from '../../../basic/precondtion';
 import { ResponseError } from '../../../basic/request/exceptions';
 import { RestfulRequest } from '../../../basic/request/restful';
@@ -8,7 +9,6 @@ import { CoinInfo } from '../../../types/chain';
 import {
   AddressInfo,
   ClientInfo,
-  EstimatedPrice,
   FeePricePerUnit,
   TransactionStatus,
 } from '../../../types/provider';
@@ -81,9 +81,11 @@ class Tendermint extends BaseRestfulClient {
 
     if (existing) {
       try {
-        balance = await this.getBalance(address, {
-          tokenAddress: this.mainCoinDenom,
-        });
+        [balance] = await this.getNativeTokenBalances(address, [
+          {
+            tokenAddress: this.mainCoinDenom,
+          },
+        ]);
       } catch (e) {
         console.debug(`Error in get balance. address: ${address}, error: `, e);
       }
@@ -97,36 +99,139 @@ class Tendermint extends BaseRestfulClient {
     };
   }
 
-  async getBalance(
-    address: string,
-    coin: Partial<CoinInfo>,
-  ): Promise<BigNumber> {
-    const balanceInfo = await this.restful
-      .get(`/cosmos/bank/v1beta1/balances/${address}`)
-      .then((i) => i.json()); // fixme pagination support
+  async getBalances(
+    requests: Array<{ address: string; coin: Partial<CoinInfo> }>,
+  ): Promise<Array<BigNumber | undefined>> {
+    type OrderedRequest = typeof requests[number] & { order: number };
 
-    let balance = new BigNumber(0);
-    if (Array.isArray(balanceInfo.balances)) {
-      const [info] = balanceInfo.balances.filter(
-        (i: any) => i.denom === coin.tokenAddress,
+    const [nativeTokenRequests, cw20Requests] = requests.reduce<
+      OrderedRequest[][]
+    >(
+      (acc, cur, index) => {
+        Object.assign(cur, { order: index });
+
+        if (cur.coin.options?.isCW20) {
+          acc[1].push(cur as never);
+        } else {
+          acc[0].push(cur as never);
+        }
+        return acc;
+      },
+      [[], []],
+    );
+
+    const cw20Balances: Array<{ order: number; value: BigNumber | undefined }> =
+      await Promise.allSettled(
+        cw20Requests.map((req) => this.getCW20Balance(req.address, req.coin)),
+      ).then((results) =>
+        results
+          .map((r) => (r.status === 'fulfilled' ? r.value : undefined))
+          .map((v, index) => ({ order: cw20Requests[index].order, value: v })),
       );
-      info && (balance = new BigNumber(info.amount));
-    }
 
-    return balance;
+    const compressedNativeTokenRequests: [string, OrderedRequest[]][] =
+      Object.entries(
+        nativeTokenRequests.reduce<Record<string, OrderedRequest[]>>(
+          (acc, cur) => {
+            if (!acc[cur.address]) {
+              acc[cur.address] = [];
+            }
+            acc[cur.address].push(cur);
+            return acc;
+          },
+          {},
+        ),
+      );
+    const nativeTokenBalances: Array<{
+      order: number;
+      value: BigNumber | undefined;
+    }> = await Promise.allSettled(
+      compressedNativeTokenRequests.map(([address, reqs]) =>
+        this.getNativeTokenBalances(
+          address,
+          reqs.map((r) => r.coin),
+        ),
+      ),
+    ).then((results) =>
+      results
+        .map((r) => (r.status === 'fulfilled' ? r.value : undefined))
+        .reduce<
+          Array<{
+            order: number;
+            value: BigNumber | undefined;
+          }>
+        >((acc, cur, index) => {
+          const [address, reqs] = compressedNativeTokenRequests[index];
+          cur = cur || Array(reqs.length).fill(undefined);
+          acc.push(
+            ...cur.map((v, subIndex) => ({
+              value: v,
+              order: reqs[subIndex].order,
+            })),
+          );
+
+          return acc;
+        }, []),
+    );
+
+    return [...cw20Balances, ...nativeTokenBalances]
+      .sort((a, b) => a.order - b.order)
+      .map((i) => i.value);
+  }
+
+  async getNativeTokenBalances(
+    address: string,
+    coins: Partial<CoinInfo>[],
+  ): Promise<BigNumber[]> {
+    const rawResult: Array<any> = await this.restful
+      .get(`/bank/balances/${address}`)
+      .then((i) => i.json())
+      .then((i) => i.result || []);
+    const balanceInfo = rawResult.reduce<Record<string, BigNumber>>(
+      (acc, cur) => {
+        acc[cur.denom] = new BigNumber(cur.amount);
+        return acc;
+      },
+      {},
+    );
+
+    return coins.map(({ tokenAddress }) =>
+      tokenAddress && tokenAddress in balanceInfo
+        ? balanceInfo[tokenAddress]
+        : new BigNumber(0),
+    );
+  }
+
+  async getCW20Balance(address: string, coin: Partial<CoinInfo>) {
+    const result: any = await this.queryContract(coin.tokenAddress!, {
+      balance: { address },
+    });
+    return new BigNumber(result?.balance ?? 0);
+  }
+
+  async queryContract(
+    contractAddress: string,
+    query: unknown,
+    others: object = {},
+  ): Promise<unknown> {
+    return this.restful
+      .get(`/terra/wasm/v1beta1/contracts/${contractAddress}/store`, {
+        ...others,
+        query_msg: Buffer.from(JSON.stringify(query), 'utf-8').toString(
+          'base64',
+        ),
+      })
+      .then((i) => i.json())
+      .then((i) => i.query_result);
+  }
+
+  getBalance(address: string, coin: Partial<CoinInfo>): Promise<BigNumber> {
+    return Promise.reject(NotImplementedError);
   }
 
   getFeePricePerUnit(): Promise<FeePricePerUnit> {
     const gasPriceStep: typeof DEFAULT_GAS_PRICE_STEP =
       this.chainInfo?.implOptions?.gasPriceStep || DEFAULT_GAS_PRICE_STEP;
-
-    const asEstimatedPrice = (
-      step: keyof typeof DEFAULT_GAS_PRICE_STEP,
-      waitingBlock: number,
-    ): EstimatedPrice => ({
-      price: new BigNumber(gasPriceStep[step]),
-      waitingBlock,
-    });
 
     return Promise.resolve({
       normal: { price: new BigNumber(gasPriceStep['normal']) },

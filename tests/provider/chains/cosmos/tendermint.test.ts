@@ -68,7 +68,7 @@ test('getAddress', async () => {
   );
   restful.get.mockReturnValueOnce(
     okResponse({
-      balances: [
+      result: [
         { denom: 'uatom', amount: '101122' },
         { denom: 'uatom2', amount: '11' },
       ],
@@ -84,7 +84,7 @@ test('getAddress', async () => {
   });
   expect(restful.get.mock.calls).toEqual([
     [`/cosmos/auth/v1beta1/accounts/${address}`],
-    [`/cosmos/bank/v1beta1/balances/${address}`],
+    [`/bank/balances/${address}`],
   ]);
 });
 
@@ -104,27 +104,65 @@ test('getAddress but not existing', async () => {
   );
 });
 
-test('getBalance', async () => {
-  restful.get.mockImplementation(() =>
-    okResponse({
-      balances: [
-        { denom: 'uatom', amount: '101122' },
-        { denom: 'uatom2', amount: '11' },
-      ],
-    }),
-  );
+test('getBalances', async () => {
+  restful.get
+    .mockReturnValueOnce(
+      okResponse({
+        query_result: {
+          balance: '14',
+        },
+      }),
+    )
+    .mockReturnValueOnce(
+      okResponse({
+        result: [
+          { denom: 'uatom', amount: '101122' },
+          { denom: 'uatom2', amount: '11' },
+          { denom: 'uatom3', amount: '22' },
+        ],
+      }),
+    )
+    .mockReturnValueOnce(
+      okResponse({
+        result: [
+          { denom: 'uatom4', amount: '33' },
+          { denom: 'uatom5', amount: '1' },
+        ],
+      }),
+    );
 
-  const address = 'cosmos155svs6sgxe55rnvs6ghprtqu0mh69kehrn0dqr';
+  const address1 = 'cosmos155svs6sgxe55rnvs6ghprtqu0mh69kehrn0dqr';
+  const address2 = 'cosmos16l08n3ezwep06xzddqncmj05kssc0nngetn6qg';
   await expect(
-    tendermint.getBalance(address, { tokenAddress: 'uatom' }),
-  ).resolves.toStrictEqual(new BigNumber(101122));
-  await expect(
-    tendermint.getBalance(address, { tokenAddress: 'uatom2' }),
-  ).resolves.toStrictEqual(new BigNumber(11));
+    tendermint.getBalances([
+      { address: address1, coin: { tokenAddress: 'uatom' } },
+      { address: address1, coin: { tokenAddress: 'uatom3' } },
+      {
+        address: address1,
+        coin: {
+          tokenAddress: 'cosmos1xa5kjphwkmq7wywj7gz40yqdegp70cy35sj98y',
+          options: { isCW20: true },
+        },
+      },
+      { address: address2, coin: { tokenAddress: 'uatom5' } },
+    ]),
+  ).resolves.toStrictEqual([
+    new BigNumber('101122'),
+    new BigNumber('22'),
+    new BigNumber('14'),
+    new BigNumber('1'),
+  ]);
 
   expect(restful.get.mock.calls).toEqual([
-    [`/cosmos/bank/v1beta1/balances/${address}`],
-    [`/cosmos/bank/v1beta1/balances/${address}`],
+    [
+      `/terra/wasm/v1beta1/contracts/cosmos1xa5kjphwkmq7wywj7gz40yqdegp70cy35sj98y/store`,
+      {
+        query_msg:
+          'eyJiYWxhbmNlIjp7ImFkZHJlc3MiOiJjb3Ntb3MxNTVzdnM2c2d4ZTU1cm52czZnaHBydHF1MG1oNjlrZWhybjBkcXIifX0=',
+      },
+    ],
+    [`/bank/balances/${address1}`],
+    [`/bank/balances/${address2}`],
   ]);
 });
 

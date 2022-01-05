@@ -12,6 +12,7 @@ type CoinInfo = {
   chainCode: string;
   decimals: number;
   tokenAddress?: string;
+  options?: { [key: string]: any };
 };
 
 export { ChainInfo, CoinInfo };

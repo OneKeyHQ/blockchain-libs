@@ -14,9 +14,11 @@ import { isValidAddress, pubkeyToAddress } from './sdk/address';
 import { sha256 } from './sdk/hash';
 import {
   fastMakeSignDoc,
+  makeMsgExecuteContract,
   makeMsgSend,
   makeSignBytes,
   makeTxRawBytes,
+  ProtoMsgObj,
 } from './sdk/signing';
 import { GAS_STEP_MULTIPLIER, Tendermint } from './tendermint';
 
@@ -53,16 +55,28 @@ class Provider extends BaseProvider {
   }
 
   async verifyTokenAddress(address: string): Promise<AddressValidation> {
+    const validation = await this.verifyAddress(address);
+    if (validation.isValid) {
+      return {
+        ...validation,
+        encoding: 'CW20',
+      };
+    }
+
     const isValid = address.length >= 3 && address.length <= 128;
     return {
       displayAddress: isValid ? address : undefined,
       normalizedAddress: isValid ? address : undefined,
       isValid,
+      encoding: isValid ? 'NativeToken' : undefined,
     };
   }
 
   async buildUnsignedTx(unsignedTx: UnsignedTx): Promise<UnsignedTx> {
-    const feeLimit: BigNumber = unsignedTx.feeLimit || DEFAULT_GAS_LIMIT;
+    const feeLimit: BigNumber =
+      unsignedTx.feeLimit ||
+      this.chainInfo.implOptions?.gasLimits?.[unsignedTx.type || 'transfer'] ||
+      DEFAULT_GAS_LIMIT;
     const feePricePerUnit: BigNumber =
       BigNumber.isBigNumber(unsignedTx.feePricePerUnit) &&
       unsignedTx.feePricePerUnit.isFinite() &&
@@ -84,23 +98,16 @@ class Provider extends BaseProvider {
         accountNumber! < 0 ||
         nonce! < 0)
     ) {
-      try {
-        const accountInfo = await this.tendermint.then((i) =>
-          i.getAddress(input.address),
-        );
-        nonce = accountInfo.nonce;
-        accountNumber = accountInfo.accountNumber;
-      } catch (e) {
-        console.debug(
-          `Error in get Address from tendermint. address: ${input.address}, error: `,
-          e,
-        );
-      }
+      const accountInfo = await this.tendermint.then((i) =>
+        i.getAddress(input.address),
+      );
+      nonce = accountInfo.nonce;
+      accountNumber = accountInfo.accountNumber;
     }
 
     return Object.assign({}, unsignedTx, {
-      feeLimit,
-      feePricePerUnit,
+      feeLimit: new BigNumber(feeLimit),
+      feePricePerUnit: new BigNumber(feePricePerUnit),
       nonce: Number.isFinite(nonce) && nonce! >= 0 ? nonce : undefined,
       payload: {
         accountNumber:
@@ -117,7 +124,7 @@ class Provider extends BaseProvider {
   ): Promise<SignedTx> {
     const signer = signers[unsignedTx.inputs[0].address];
     const pubkey = await signer.getPubkey(true);
-    const signDoc = this.packUnsignedTx(
+    const signDoc = Provider.packUnsignedTx(
       unsignedTx,
       pubkey,
       this.chainInfo!.implOptions!.mainCoinDenom,
@@ -138,25 +145,16 @@ class Provider extends BaseProvider {
     };
   }
 
-  packUnsignedTx(
+  static packUnsignedTx(
     unsignedTx: UnsignedTx,
     pubkey: Buffer,
     mainCoinDenom: string,
     chainId: string,
   ): SignDoc {
-    const { inputs, outputs, feeLimit, feePricePerUnit, nonce, payload } =
-      unsignedTx;
-
-    const [input] = inputs;
-    const [output] = outputs;
+    const { feeLimit, feePricePerUnit, nonce, payload } = unsignedTx;
     const { memo, accountNumber } = payload;
 
-    const msg = makeMsgSend(
-      input.address,
-      output.address,
-      output.value.integerValue().toString(),
-      output.tokenAddress!,
-    );
+    const msg = Provider.packMsgObj(unsignedTx);
 
     const feeAmount: BigNumber = feePricePerUnit!.lte(0)
       ? new BigNumber(0)
@@ -175,6 +173,30 @@ class Provider extends BaseProvider {
       accountNumber,
       nonce!,
     );
+  }
+
+  static packMsgObj(unsignedTx: UnsignedTx): ProtoMsgObj {
+    const { inputs, outputs, type } = unsignedTx;
+    const [input] = inputs;
+    const [output] = outputs;
+
+    if (type === undefined || type === 'transfer') {
+      return makeMsgSend(
+        input.address,
+        output.address,
+        output.value.integerValue().toString(),
+        output.tokenAddress!,
+      );
+    } else if (type === 'cw20_transfer') {
+      return makeMsgExecuteContract(input.address, output.tokenAddress!, {
+        transfer: {
+          amount: output.value.integerValue().toString(),
+          recipient: output.address,
+        },
+      });
+    }
+
+    throw new Error(`Invalid type: ${type} on unsignedTx`);
   }
 }
 
