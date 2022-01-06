@@ -85,6 +85,7 @@ type TxOutput = {
 type UnsignedTx = {
   inputs: TxInput[];
   outputs: TxOutput[];
+  type?: string;
   nonce?: number;
   feeLimit?: BigNumber;
   feePricePerUnit?: BigNumber;
@@ -100,8 +101,6 @@ export {
   ClientInfo,
   AddressInfo,
   TransactionStatus,
-  // BroadcastReceiptCode,
-  // BroadcastReceipt,
   EstimatedPrice,
   FeePricePerUnit,
   PartialTokenInfo,
