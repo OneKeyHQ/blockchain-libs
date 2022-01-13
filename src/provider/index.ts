@@ -19,9 +19,12 @@ import { Signer, Verifier } from '../types/secret';
 import { BaseClient, BaseProvider, ClientFilter } from './abc';
 
 const IMPLS: { [key: string]: any } = {
-  eth: require('./chains/eth'),
   algo: require('./chains/algo'),
+  cfx: require('./chains/cfx'),
   cosmos: require('./chains/cosmos'),
+  eth: require('./chains/eth'),
+  sol: require('./chains/sol'),
+  stc: require('./chains/stc'),
 };
 
 class ProviderController {
