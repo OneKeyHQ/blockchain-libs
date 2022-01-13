@@ -3,10 +3,10 @@ import BigNumber from 'bignumber.js';
 import { fromBigIntHex, toBigIntHex } from '../../src/basic/bignumber-plus';
 
 test('toBigIntHex', () => {
-  expect(toBigIntHex(new BigNumber(0))).toBe('0x00');
-  expect(toBigIntHex(new BigNumber(10))).toBe('0x0a');
+  expect(toBigIntHex(new BigNumber(0))).toBe('0x0');
+  expect(toBigIntHex(new BigNumber(10))).toBe('0xa');
   expect(toBigIntHex(new BigNumber(0xff))).toBe('0xff');
-  expect(toBigIntHex(new BigNumber('0xa.1c28f5c28f5c28f5c28f'))).toBe('0x0a'); // ignore decimal point
+  expect(toBigIntHex(new BigNumber('0xa.1c28f5c28f5c28f5c28f'))).toBe('0xa'); // ignore decimal point
 });
 
 test('fromBigIntHex', () => {

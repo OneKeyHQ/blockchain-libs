@@ -5,10 +5,6 @@ import { check } from './precondtion';
 const toBigIntHex = (value: BigNumber): string => {
   let hexStr = value.integerValue().toString(16);
 
-  if (hexStr.length % 2 === 1) {
-    hexStr = '0' + hexStr;
-  }
-
   hexStr = '0x' + hexStr;
   return hexStr;
 };
