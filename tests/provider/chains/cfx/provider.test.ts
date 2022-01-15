@@ -268,7 +268,7 @@ describe('buildUnsignedTx', () => {
     expect(conflux.estimateGasLimit).toHaveBeenCalledWith(
       'cfxtest:aakrn3d7hezu0tcafpe92bbbsy1fw2u5za1xa2uvgp',
       'cfxtest:acepe88unk7fvs18436178up33hb4zkuf62a9dk1gv',
-      '0x00',
+      '0x0',
       '0xa9059cbb00000000000000000000000012b1e160ae592499b31a29b5cd98667780b066d60000000000000000000000000000000000000000000000000000000000000015',
     );
     expect(conflux.getAddresses).toHaveBeenCalledWith([

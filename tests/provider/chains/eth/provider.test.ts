@@ -272,7 +272,7 @@ test('buildUnsignedTx with ERC20', async () => {
   expect(geth.estimateGasLimit).toHaveBeenCalledWith(
     '0x71df3bb810127271d400f7be99cc1f4504ab4c1a',
     '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
-    '0x00',
+    '0x0',
     '0xa9059cbb000000000000000000000000a305fab8bda7e1638235b054889b3217441dd6450000000000000000000000000000000000000000000000000000000000000015',
   );
   expect(geth.getAddresses).toHaveBeenCalledWith([

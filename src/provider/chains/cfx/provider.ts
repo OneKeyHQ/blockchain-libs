@@ -77,7 +77,7 @@ class Provider extends BaseProvider {
           defaultAbiCoder
             .encode(['address', 'uint256'], [toAddress, value])
             .slice(2); // method_selector(transfer) + byte32_pad(address) + byte32_pad(value)
-        value = '0x00';
+        value = '0x0';
         toAddress = tokenAddress;
       } else {
         data = payload.data;
@@ -158,7 +158,7 @@ class Provider extends BaseProvider {
     const output = unsignedTx.outputs[0];
     const isERC20Transfer = !!output.tokenAddress;
     const toAddress = isERC20Transfer ? output.tokenAddress : output.address;
-    const value = isERC20Transfer ? '0x00' : output.value;
+    const value = isERC20Transfer ? '0x0' : output.value;
 
     return {
       to: toAddress,

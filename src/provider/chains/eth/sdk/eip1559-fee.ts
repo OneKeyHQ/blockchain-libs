@@ -84,10 +84,9 @@ const estimateFee = (
   const multiplier = getBaseFeeMultiplier(baseFee);
 
   const potentialMaxFee = baseFee.multipliedBy(multiplier).div(100);
-  const maxFeePerGas =
-    maxPriorityFeePerGas > potentialMaxFee
-      ? potentialMaxFee.plus(maxPriorityFeePerGas)
-      : potentialMaxFee;
+  const maxFeePerGas = maxPriorityFeePerGas.isGreaterThan(potentialMaxFee)
+    ? potentialMaxFee.plus(maxPriorityFeePerGas)
+    : potentialMaxFee;
 
   return {
     maxFeePerGas,
