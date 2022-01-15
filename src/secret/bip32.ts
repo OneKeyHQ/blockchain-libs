@@ -5,9 +5,11 @@ type ExtendedKey = {
   key: Buffer;
   chainCode: Buffer;
 };
+const BigInt_0 = BigInt(0);
+const BigInt_1 = BigInt(1);
 
 function serNum(p: bigint, bits: 32 | 256): Buffer {
-  if (p < 0n || p >= 1n << BigInt(bits)) {
+  if (p < BigInt_0 || p >= BigInt_1 << BigInt(bits)) {
     throw Error('Overflowed.');
   }
 
@@ -71,7 +73,7 @@ class BaseBip32KeyDeriver implements Bip32KeyDeriver {
     const chainCode: Buffer = I.slice(32, 64);
 
     const parsedIL: bigint = parse256(IL);
-    if (parsedIL < this.curve.groupOrder && parsedIL != 0n) {
+    if (parsedIL < this.curve.groupOrder && parsedIL != BigInt_0) {
       return { key: IL, chainCode: chainCode };
     }
     return this.generateMasterKeyFromSeed(I);
@@ -101,7 +103,7 @@ class BaseBip32KeyDeriver implements Bip32KeyDeriver {
       const parsedIL: bigint = parse256(I.slice(0, 32));
       const childKey: bigint =
         (parsedIL + parse256(parent.key)) % this.curve.groupOrder;
-      if (parsedIL < this.curve.groupOrder && childKey != 0n) {
+      if (parsedIL < this.curve.groupOrder && childKey != BigInt_0) {
         return { key: ser256(childKey), chainCode: IR };
       }
 
