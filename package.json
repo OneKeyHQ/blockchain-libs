@@ -53,6 +53,7 @@
     "@solana/web3.js": "^1.29.2",
     "@starcoin/starcoin": "^1.6.2",
     "algo-msgpack-with-bigint": "^2.1.1",
+    "asmcrypto.js": "^2.3.2",
     "bech32": "^1.1.4",
     "bignumber.js": "^9.0.1",
     "bip39": "^3.0.4",

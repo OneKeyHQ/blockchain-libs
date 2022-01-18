@@ -1,11 +1,13 @@
-import * as crypto from 'crypto';
+import { HmacSha512, Sha256 } from 'asmcrypto.js';
 
 function hmacSHA512(key: Buffer, data: Buffer): Buffer {
-  return crypto.createHmac('sha512', key).update(data).digest();
+  return Buffer.from(
+    new HmacSha512(key).process(data).finish().result as Uint8Array,
+  );
 }
 
 function sha256(data: Buffer): Buffer {
-  return crypto.createHash('sha256').update(data).digest();
+  return Buffer.from(new Sha256().process(data).finish().result as Uint8Array);
 }
 
 export { hmacSHA512, sha256 };
