@@ -6,10 +6,9 @@ type ExtendedKey = {
   chainCode: Buffer;
 };
 const BigInt_0 = BigInt(0);
-const BigInt_1 = BigInt(1);
 
 function serNum(p: bigint, bits: 32 | 256): Buffer {
-  if (p < BigInt_0 || p >= BigInt_1 << BigInt(bits)) {
+  if (p < BigInt_0 || p >= BigInt(2 ** bits)) {
     throw Error('Overflowed.');
   }
 
