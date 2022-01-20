@@ -4,6 +4,8 @@ import elliptic from 'elliptic';
 import { IncorrectPassword, InvalidMnemonic } from '../../src/basic/exceptions';
 import { decrypt, encrypt } from '../../src/secret/encryptors/aes256';
 import {
+  batchGetPrivateKeys,
+  batchGetPublicKeys,
   CKDPriv,
   CKDPub,
   CurveName,
@@ -794,4 +796,157 @@ test('Incorrect mnemonic', () => {
       'whatever password',
     );
   }).toThrowError(InvalidMnemonic);
+});
+
+test('batch get public keys', () => {
+  const seed = revealableSeedFromMnemonic(
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+    password,
+  ).seed;
+  expect(
+    batchGetPublicKeys('secp256k1', seed, password, "m/44'/0'/0'", [
+      '0/0',
+      '0/1',
+      '1/0',
+      '1/1',
+    ]),
+  ).toStrictEqual([
+    {
+      path: "m/44'/0'/0'/0/0",
+      parentFingerPrint: Buffer.from('1962ab58', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '213909708058e0ec4a99c19d8e041c014ae6c7dc21d2a1fac86772df7ca357a6',
+          'hex',
+        ),
+        key: Buffer.from(
+          '03aaeb52dd7494c361049de67cc680e83ebcbbbdbeb13637d92cd845f70308af5e',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/0'/0'/0/1",
+      parentFingerPrint: Buffer.from('1962ab58', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '035a07e55d123c872e271a70531e1f30402aa2221efb1d354190e0c25aff10ce',
+          'hex',
+        ),
+        key: Buffer.from(
+          '02dfcaec532010d704860e20ad6aff8cf3477164ffb02f93d45c552dadc70ed24f',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/0'/0'/1/0",
+      parentFingerPrint: Buffer.from('8c7306cd', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          'c2d21742a618c9ccc89e7e8b5e734cd555d4ae3089787da6af02eac0cbf73141',
+          'hex',
+        ),
+        key: Buffer.from(
+          '03498b3ac8e882c5d693540c49adf22b7a1b99c1bb8047966739bfe8cdeb272e64',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/0'/0'/1/1",
+      parentFingerPrint: Buffer.from('8c7306cd', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '7d001e9b088c708cac689e68c7987bfe9536b8f24779770035890ea3b5a09f01',
+          'hex',
+        ),
+        key: Buffer.from(
+          '03f26f242c4851fbc74c817dbb1cd3c99993cd078470117d8d0473de3273ad1c92',
+          'hex',
+        ),
+      },
+    },
+  ]);
+});
+
+test('batch get private keys', () => {
+  const seed = revealableSeedFromMnemonic(
+    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+    password,
+  ).seed;
+  expect(
+    batchGetPrivateKeys('secp256k1', seed, password, "m/44'/60'/0'/0", [
+      '0',
+      '1',
+      '2',
+      '3',
+    ]).map((item) => {
+      return {
+        path: item.path,
+        parentFingerPrint: item.parentFingerPrint,
+        extendedKey: {
+          chainCode: item.extendedKey.chainCode,
+          key: decrypt(password, item.extendedKey.key),
+        },
+      };
+    }),
+  ).toStrictEqual([
+    {
+      path: "m/44'/60'/0'/0/0",
+      parentFingerPrint: Buffer.from('e4389614', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '736094f4f24b67e838a4b3d23d31d229ca03e00c9bb99ce95da6d86e8b3847b5',
+          'hex',
+        ),
+        key: Buffer.from(
+          '1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/60'/0'/0/1",
+      parentFingerPrint: Buffer.from('e4389614', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '88248bfa0d93a1496c2f5d2838734983ed3bf49492a676c861d338bab8c78ce9',
+          'hex',
+        ),
+        key: Buffer.from(
+          '9a983cb3d832fbde5ab49d692b7a8bf5b5d232479c99333d0fc8e1d21f1b55b6',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/60'/0'/0/2",
+      parentFingerPrint: Buffer.from('e4389614', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '554b25fcafbe003cc51b5464aa995cc006d18a8822cba79bda6cbacced96c2f1',
+          'hex',
+        ),
+        key: Buffer.from(
+          '5b824bd1104617939cd07c117ddc4301eb5beeca0904f964158963d69ab9d831',
+          'hex',
+        ),
+      },
+    },
+    {
+      path: "m/44'/60'/0'/0/3",
+      parentFingerPrint: Buffer.from('e4389614', 'hex'),
+      extendedKey: {
+        chainCode: Buffer.from(
+          '0d75fe7683a0ed67a3509188971a1bd484669fa97b97092cdb0e0b162d37df95',
+          'hex',
+        ),
+        key: Buffer.from(
+          '9ffce93c14680776a0c319c76b4c25e7ad03bd780bf47f27ae9153324dcac585',
+          'hex',
+        ),
+      },
+    },
+  ]);
 });

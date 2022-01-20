@@ -11,6 +11,7 @@ import {
 } from './bip39';
 import { BaseCurve, ed25519, nistp256, secp256k1 } from './curves';
 import * as encryptor from './encryptors/aes256';
+import { hash160 } from './hash';
 
 type CurveName = 'secp256k1' | 'nistp256' | 'ed25519';
 
@@ -87,6 +88,153 @@ function publicFromPrivate(
 ): Buffer {
   return getCurveByName(curveName).publicFromPrivate(
     encryptor.decrypt(password, encryptedPrivateKey),
+  );
+}
+
+function uncompressPublicKey(curveName: CurveName, publicKey: Buffer): Buffer {
+  if (publicKey.length === 65) {
+    return publicKey;
+  }
+  return getCurveByName(curveName).transformPublicKey(publicKey);
+}
+
+function compressPublicKey(curveName: CurveName, publicKey: Buffer): Buffer {
+  if (publicKey.length === 33) {
+    return publicKey;
+  }
+  return getCurveByName(curveName).transformPublicKey(publicKey);
+}
+
+function batchGetKeys(
+  curveName: CurveName,
+  encryptedSeed: Buffer,
+  password: string,
+  prefix: string,
+  relPaths: Array<string>,
+  type: 'public' | 'private',
+): Array<{
+  path: string;
+  parentFingerPrint: Buffer;
+  extendedKey: ExtendedKey;
+}> {
+  const ret: Array<{
+    path: string;
+    parentFingerPrint: Buffer;
+    extendedKey: ExtendedKey;
+  }> = [];
+  const cache: Record<
+    string,
+    {
+      fingerPrint: Buffer | undefined;
+      parentFingerPrint: Buffer;
+      privkey: ExtendedKey;
+    }
+  > = {};
+
+  const deriver: Bip32KeyDeriver = getDeriverByCurveName(curveName);
+  const seed: Buffer = encryptor.decrypt(password, encryptedSeed);
+  let key: ExtendedKey = deriver.generateMasterKeyFromSeed(seed);
+
+  prefix.split('/').forEach((pathComponent) => {
+    if (pathComponent === 'm') {
+      return;
+    }
+    const index = pathComponent.endsWith("'")
+      ? parseInt(pathComponent.slice(0, -1)) + 2 ** 31
+      : parseInt(pathComponent);
+    key = deriver.CKDPriv(key, index);
+  });
+
+  cache[prefix] = {
+    fingerPrint: hash160(deriver.N(key).key).slice(0, 4),
+    parentFingerPrint: Buffer.from([]),
+    privkey: key,
+  };
+
+  relPaths.forEach((relPath) => {
+    const pathComponents = relPath.split('/');
+
+    let currentPath = prefix;
+    let parent = cache[currentPath];
+    pathComponents.forEach((pathComponent) => {
+      currentPath = `${currentPath}/${pathComponent}`;
+      if (typeof cache[currentPath] === 'undefined') {
+        const index = pathComponent.endsWith("'")
+          ? parseInt(pathComponent.slice(0, -1)) + 2 ** 31
+          : parseInt(pathComponent);
+        const privkey = deriver.CKDPriv(parent.privkey, index);
+
+        if (typeof parent.fingerPrint === 'undefined') {
+          parent.fingerPrint = hash160(deriver.N(parent.privkey).key).slice(
+            0,
+            4,
+          );
+        }
+
+        cache[currentPath] = {
+          fingerPrint: undefined,
+          parentFingerPrint: parent.fingerPrint,
+          privkey: privkey,
+        };
+      }
+      parent = cache[currentPath];
+    });
+
+    ret.push({
+      path: currentPath,
+      parentFingerPrint: cache[currentPath].parentFingerPrint,
+      extendedKey:
+        type === 'private'
+          ? {
+              chainCode: cache[currentPath].privkey.chainCode,
+              key: encryptor.encrypt(password, cache[currentPath].privkey.key),
+            }
+          : deriver.N(cache[currentPath].privkey),
+    });
+  });
+
+  return ret;
+}
+
+function batchGetPrivateKeys(
+  curveName: CurveName,
+  encryptedSeed: Buffer,
+  password: string,
+  prefix: string,
+  relPaths: Array<string>,
+): Array<{
+  path: string;
+  parentFingerPrint: Buffer;
+  extendedKey: ExtendedKey;
+}> {
+  return batchGetKeys(
+    curveName,
+    encryptedSeed,
+    password,
+    prefix,
+    relPaths,
+    'private',
+  );
+}
+
+function batchGetPublicKeys(
+  curveName: CurveName,
+  encryptedSeed: Buffer,
+  password: string,
+  prefix: string,
+  relPaths: Array<string>,
+): Array<{
+  path: string;
+  parentFingerPrint: Buffer;
+  extendedKey: ExtendedKey;
+}> {
+  return batchGetKeys(
+    curveName,
+    encryptedSeed,
+    password,
+    prefix,
+    relPaths,
+    'public',
   );
 }
 
@@ -169,8 +317,12 @@ export {
   CurveName,
   ExtendedKey,
   publicFromPrivate,
+  uncompressPublicKey,
+  compressPublicKey,
   verify,
   sign,
+  batchGetPrivateKeys,
+  batchGetPublicKeys,
   generateMasterKeyFromSeed,
   N,
   CKDPriv,

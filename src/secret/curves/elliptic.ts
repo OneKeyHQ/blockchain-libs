@@ -13,6 +13,24 @@ class EllipticECWrapper implements CurveForKD {
     this.groupOrder = BigInt(curve.n!.toString());
   }
 
+  transformPublicKey(publicKey: Buffer): Buffer {
+    let toCompressed: boolean;
+    if (publicKey.length == 33 && (publicKey[0] === 2 || publicKey[0] === 3)) {
+      toCompressed = false;
+    } else if (publicKey.length == 65 && publicKey[0] === 4) {
+      toCompressed = true;
+    } else {
+      throw new Error('Invalid public key.');
+    }
+
+    return Buffer.from(
+      this.curve
+        .keyFromPublic(publicKey)
+        .getPublic()
+        .encode(undefined, toCompressed),
+    );
+  }
+
   publicFromPrivate(privateKey: Buffer): Buffer {
     return Buffer.from(
       this.curve.keyFromPrivate(privateKey).getPublic().encodeCompressed(),
@@ -57,6 +75,10 @@ class EllipticECWrapper implements CurveForKD {
 
 class EllipticEDDSAWrapper implements BaseCurve {
   constructor(private curve: elliptic.eddsa) {}
+
+  transformPublicKey(publicKey: Buffer): Buffer {
+    return publicKey;
+  }
 
   publicFromPrivate(privateKey: Buffer): Buffer {
     return Buffer.from(this.curve.keyFromSecret(privateKey).getPublic());
