@@ -1,4 +1,5 @@
 interface BaseCurve {
+  transformPublicKey(publicKey: Buffer): Buffer;
   publicFromPrivate(privateKey: Buffer): Buffer;
   verify(publicKey: Buffer, digest: Buffer, signature: Buffer): boolean;
   sign(privateKey: Buffer, digest: Buffer): Buffer;
