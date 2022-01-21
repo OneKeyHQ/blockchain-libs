@@ -53,8 +53,8 @@ class EllipticECWrapper implements CurveForKD {
       .keyFromPrivate(privateKey)
       .sign(digest, { canonical: true });
     return Buffer.concat([
-      signature.r.toBuffer('be', 32),
-      signature.s.toBuffer('be', 32),
+      signature.r.toArrayLike(Buffer, 'be', 32),
+      signature.s.toArrayLike(Buffer, 'be', 32),
       Buffer.from([signature.recoveryParam]),
     ]);
   }
