@@ -52,7 +52,7 @@ abstract class BaseClient {
   }
 }
 
-abstract class BaseRestfulClient extends BaseClient {
+abstract class SimpleClient extends BaseClient {
   async batchCall2SingleCall<T, R>(
     inputs: T[],
     handler: (input: T) => Promise<R | undefined>,
@@ -94,10 +94,9 @@ abstract class BaseRestfulClient extends BaseClient {
     );
   }
 
-  abstract getBalance(
-    address: string,
-    coin: Partial<CoinInfo>,
-  ): Promise<BigNumber>;
+  getBalance(address: string, coin: Partial<CoinInfo>): Promise<BigNumber> {
+    return this.getAddress(address).then((res) => res.balance);
+  }
 
   getTransactionStatuses(
     txids: Array<string>,
@@ -190,4 +189,4 @@ abstract class BaseProvider {
   }
 }
 
-export { BaseClient, BaseRestfulClient, BaseProvider, ClientFilter };
+export { BaseClient, SimpleClient, BaseProvider, ClientFilter };

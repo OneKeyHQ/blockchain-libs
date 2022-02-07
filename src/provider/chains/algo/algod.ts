@@ -12,13 +12,13 @@ import {
   FeePricePerUnit,
   TransactionStatus,
 } from '../../../types/provider';
-import { BaseRestfulClient } from '../../abc';
+import { SimpleClient } from '../../abc';
 
 import { SuggestedParams } from './sdk';
 
 const ONE_MIN_IN_NANO_SECONDS = 60 * 1e9;
 
-class Algod extends BaseRestfulClient {
+class Algod extends SimpleClient {
   readonly restful: RestfulRequest;
   private readonly _indexer?: RestfulRequest;
 

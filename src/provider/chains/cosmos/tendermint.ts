@@ -12,7 +12,7 @@ import {
   FeePricePerUnit,
   TransactionStatus,
 } from '../../../types/provider';
-import { BaseRestfulClient } from '../../abc';
+import { SimpleClient } from '../../abc';
 
 const MINUTES_30 = 30 * 60 * 1000;
 
@@ -27,7 +27,7 @@ const DEFAULT_GAS_PRICE_STEP = {
   high: 400,
 };
 
-class Tendermint extends BaseRestfulClient {
+class Tendermint extends SimpleClient {
   readonly restful: RestfulRequest;
 
   constructor(url: string) {
