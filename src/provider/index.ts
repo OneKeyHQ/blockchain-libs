@@ -25,6 +25,7 @@ const IMPLS: { [key: string]: any } = {
   eth: require('./chains/eth'),
   sol: require('./chains/sol'),
   stc: require('./chains/stc'),
+  near: require('./chains/near'),
 };
 
 class ProviderController {
