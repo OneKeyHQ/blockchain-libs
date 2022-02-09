@@ -97,6 +97,11 @@ type SignedTx = {
   rawTx: string;
 };
 
+type TypedMessage = {
+  type?: number;
+  message: string;
+};
+
 export {
   ClientInfo,
   AddressInfo,
@@ -110,4 +115,5 @@ export {
   TxOutput,
   UnsignedTx,
   SignedTx,
+  TypedMessage,
 };

@@ -11,6 +11,7 @@ import {
   PartialTokenInfo,
   SignedTx,
   TransactionStatus,
+  TypedMessage,
   UnsignedTx,
   UTXO,
 } from '../types/provider';
@@ -173,7 +174,7 @@ abstract class BaseProvider {
   }
 
   signMessage(
-    message: string,
+    message: TypedMessage,
     signer: Signer,
     address?: string,
   ): Promise<string> {
@@ -182,7 +183,7 @@ abstract class BaseProvider {
 
   verifyMessage(
     address: string,
-    message: string,
+    message: TypedMessage,
     signature: string,
   ): Promise<boolean> {
     return Promise.reject(NotImplementedError);
