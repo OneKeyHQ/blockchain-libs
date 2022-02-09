@@ -33,7 +33,6 @@ test('Call RPC as expected', async () => {
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/rpc', {
     method: 'POST',
     headers: {
-      'User-Agent': 'blockchain-libs',
       'Content-Type': 'application/json',
       H1: '1',
       H2: '2-2',
@@ -174,7 +173,6 @@ test('Batch call RPC as expected', async () => {
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/rpc', {
     method: 'POST',
     headers: {
-      'User-Agent': 'blockchain-libs',
       'Content-Type': 'application/json',
       H1: '1',
       H2: '2-2',

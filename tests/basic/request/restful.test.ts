@@ -20,7 +20,7 @@ test('GET method as expected', async () => {
   expect(response).toStrictEqual({ pong: 'success' });
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
-    headers: { 'User-Agent': 'blockchain-libs' },
+    headers: {},
     signal: expect.anything(),
   });
 });
@@ -33,7 +33,7 @@ test('GET method with params as expected', async () => {
   expect(response).toStrictEqual({ pong: 'success' });
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping?value=1221', {
-    headers: { 'User-Agent': 'blockchain-libs' },
+    headers: {},
     signal: expect.anything(),
   });
 });
@@ -59,7 +59,7 @@ test('POST method with data as expected', async () => {
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
     method: 'POST',
-    headers: { 'User-Agent': 'blockchain-libs' },
+    headers: {},
     body: 'a=1&b=2',
     signal: expect.anything(),
   });
@@ -75,7 +75,6 @@ test('POST method with json as expected', async () => {
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
     method: 'POST',
     headers: {
-      'User-Agent': 'blockchain-libs',
       'Content-Type': 'application/json',
     },
     body: '{"a":1,"b":2}',
@@ -108,7 +107,7 @@ test('Assemble headers - GET', async () => {
   expect(response).toStrictEqual({ pong: 'success' });
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
-    headers: { 'User-Agent': 'blockchain-libs', H1: '1', H2: '2-2', H3: '3' },
+    headers: { H1: '1', H2: '2-2', H3: '3' },
     signal: expect.anything(),
   });
 });
@@ -124,7 +123,7 @@ test('Assemble headers - POST', async () => {
   expect(response).toStrictEqual({ pong: 'success' });
   expect(mockFetch).toHaveBeenCalledTimes(1);
   expect(mockFetch).toHaveBeenCalledWith('https://mytest.com/ping', {
-    headers: { 'User-Agent': 'blockchain-libs', H1: '1', H2: '2-2', H3: '3' },
+    headers: { H1: '1', H2: '2-2', H3: '3' },
     method: 'POST',
     body: undefined,
     signal: expect.anything(),
