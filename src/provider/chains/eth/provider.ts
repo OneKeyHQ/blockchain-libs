@@ -9,29 +9,15 @@ import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
 import { check, checkIsDefined } from '../../../basic/precondtion';
 import {
   AddressValidation,
-  FeePricePerUnit,
   SignedTx,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
-import { BlockNative } from './blocknative';
 import { Geth } from './geth';
 
 class Provider extends BaseProvider {
-  private _blockNative!: BlockNative;
-
-  get blockNative(): BlockNative {
-    check(this.chainId === 1, 'Only use block native for eth mainnet');
-
-    if (!this._blockNative) {
-      this._blockNative = new BlockNative();
-    }
-
-    return this._blockNative;
-  }
-
   get geth(): Promise<Geth> {
     return this.clientSelector((i) => i instanceof Geth);
   }
@@ -124,14 +110,12 @@ class Provider extends BaseProvider {
 
     let feePricePerUnit = unsignedTx.feePricePerUnit;
     if (!feePricePerUnit) {
-      const feePrice = await this.getFeePriceInfo();
-      feePricePerUnit = feePrice.feePricePerUnit;
+      const feePrice = await this.geth.then((i) => i.getFeePricePerUnit());
+      const normal = feePrice.normal;
+      feePricePerUnit = normal.price;
 
-      if (feePrice.maxFeePerGas && feePrice.maxPriorityFeePerGas) {
-        Object.assign(payload, {
-          maxFeePerGas: feePrice.maxFeePerGas,
-          maxPriorityFeePerGas: feePrice.maxPriorityFeePerGas,
-        });
+      if (normal.payload) {
+        Object.assign(payload, normal.payload);
       }
     }
 
@@ -143,40 +127,6 @@ class Provider extends BaseProvider {
       feePricePerUnit,
       payload,
     });
-  }
-
-  async getFeePriceInfo(): Promise<{
-    feePricePerUnit: BigNumber;
-    maxPriorityFeePerGas: BigNumber | undefined;
-    maxFeePerGas: BigNumber | undefined;
-  }> {
-    let fee: FeePricePerUnit | undefined = undefined;
-
-    if (
-      this.chainId === 1 &&
-      this.chainInfo?.implOptions?.EIP1559Enabled === true
-    ) {
-      try {
-        fee = await this.blockNative.getFeePricePerUnit();
-      } catch (e) {
-        console.error('Error in get fee from block native. error: ', e);
-      }
-    }
-
-    if (typeof fee === 'undefined') {
-      fee = await this.geth.then((i) => i.getFeePricePerUnit());
-    }
-
-    if (fee === undefined) {
-      throw new Error('Illegal State');
-    }
-
-    const normal = fee.normal;
-    return {
-      feePricePerUnit: normal.price,
-      maxPriorityFeePerGas: normal.payload?.maxPriorityFeePerGas,
-      maxFeePerGas: normal.payload?.maxFeePerGas,
-    };
   }
 
   async signTransaction(

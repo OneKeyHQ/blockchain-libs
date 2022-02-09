@@ -8,21 +8,43 @@ import { CoinInfo } from '../../../types/chain';
 import {
   AddressInfo,
   ClientInfo,
+  EstimatedPrice,
   FeePricePerUnit,
   PartialTokenInfo,
   TransactionStatus,
 } from '../../../types/provider';
 import { BaseClient } from '../../abc';
 
-import * as EIP1559Fee from './sdk/eip1559-fee';
+import { MmFee } from './mm-fee';
+
+type EIP1559Price = {
+  maxPriorityFeePerGas: BigNumber;
+  maxFeePerGas: BigNumber;
+  waitingBlock?: number;
+};
+
+type EIP1559Fee = {
+  baseFee: BigNumber;
+  normal: EIP1559Price;
+  others?: Array<EIP1559Price>;
+};
 
 class Geth extends BaseClient {
   static readonly __LAST_BLOCK__ = 'latest';
+  private _mmFee!: MmFee;
   readonly rpc: JsonRPCRequest;
 
   constructor(url: string) {
     super();
     this.rpc = new JsonRPCRequest(url);
+  }
+
+  get mmFee(): MmFee {
+    if (!this._mmFee) {
+      this._mmFee = new MmFee(Number(this.chainInfo?.implOptions?.chainId));
+    }
+
+    return this._mmFee;
   }
 
   async getInfo(): Promise<ClientInfo> {
@@ -213,6 +235,19 @@ class Geth extends BaseClient {
   }
 
   async getFeePricePerUnit(): Promise<FeePricePerUnit> {
+    if (this.chainInfo?.implOptions?.EIP1559Enabled === true) {
+      const eip1559Fee = await this.estimateEIP1559FeeStrategy();
+      const toLegacy = (price: EIP1559Price): EstimatedPrice => ({
+        price: eip1559Fee.baseFee.plus(price.maxPriorityFeePerGas),
+        payload: price,
+      });
+
+      return {
+        normal: toLegacy(eip1559Fee.normal),
+        others: eip1559Fee.others?.map(toLegacy),
+      };
+    }
+
     const gasPriceHex: string = await this.rpc.call('eth_gasPrice', []);
     const gasPrice = fromBigIntHex(gasPriceHex);
 
@@ -221,50 +256,60 @@ class Geth extends BaseClient {
     const normal = slow.multipliedBy(1.25).integerValue(BigNumber.ROUND_CEIL);
     const fast = normal.multipliedBy(1.2).integerValue(BigNumber.ROUND_CEIL); // 1.25 * 1.2 = 1.5
 
-    const fee: any = {
-      normal: { price: normal, waitingBlock: 4 },
-      others: [
-        { price: slow, waitingBlock: 40 },
-        { price: fast, waitingBlock: 1 },
-      ],
+    return {
+      normal: { price: normal },
+      others: [{ price: slow }, { price: fast }],
     };
-
-    if (this.chainInfo?.implOptions?.EIP1559Enabled === true) {
-      const eip1559Fee = await this.getFeePriceForEIP1559();
-      fee.normal.payload = eip1559Fee.normal.payload;
-      fee.others[0].payload = eip1559Fee.others?.[0].payload;
-      fee.others[1].payload = eip1559Fee.others?.[1].payload;
-    }
-
-    return fee;
   }
 
-  async getFeePriceForEIP1559(): Promise<FeePricePerUnit> {
+  async estimateEIP1559FeeStrategy(): Promise<EIP1559Fee> {
+    try {
+      if (
+        this.chainInfo?.implOptions?.EIP1559Enabled === true &&
+        this.chainInfo?.implOptions?.preferMetamask === true
+      ) {
+        return this.mmFee.estimateEIP1559Fee();
+      }
+    } catch (e) {
+      console.error('Failed to estimate EIP1559 fee for MM', e);
+    }
+
+    return this.estimateEIP1559Fee();
+  }
+
+  async estimateEIP1559Fee(): Promise<EIP1559Fee> {
     const [latestBlock, feeHistory] = await this.rpc.batchCall([
-      ['eth_getBlockByNumber', ['latest', false]],
-      ['eth_feeHistory', [10, 'latest', [5]]],
+      ['eth_getBlockByNumber', ['pending', false]],
+      ['eth_feeHistory', [20, 'pending', [5, 25, 80]]],
     ]);
+
     const baseFee = new BigNumber(latestBlock.baseFeePerGas);
-    const fast = EIP1559Fee.estimateFee(baseFee, feeHistory);
-    const normal = {
-      maxFeePerGas: fast.maxFeePerGas.multipliedBy(0.8),
-      maxPriorityFeePerGas: fast.maxPriorityFeePerGas.multipliedBy(0.8),
-    };
-    const slow = {
-      maxFeePerGas: fast.maxFeePerGas.multipliedBy(0.5),
-      maxPriorityFeePerGas: fast.maxPriorityFeePerGas.multipliedBy(0.5),
+    const avg = (nums: number[]) => {
+      nums = nums.filter((i) => i > 0);
+      return new BigNumber(
+        Math.round(nums.reduce((a, c) => a + c) / nums.length),
+      );
     };
 
-    const placeholder = new BigNumber(0);
+    const slow = avg(feeHistory.reward.map((i: string[]) => Number(i[0])));
+    const normal = avg(feeHistory.reward.map((i: string[]) => Number(i[1])));
+    const fast = avg(feeHistory.reward.map((i: string[]) => Number(i[2])));
+
     return {
+      baseFee: baseFee,
       normal: {
-        price: placeholder,
-        waitingBlock: 1,
-        payload: normal,
+        maxPriorityFeePerGas: normal,
+        maxFeePerGas: baseFee.multipliedBy(1.25).plus(normal).integerValue(),
       },
       others: [
-        { price: placeholder, waitingBlock: 40, payload: slow },
-        { price: placeholder, waitingBlock: 1, payload: fast },
+        {
+          maxPriorityFeePerGas: slow,
+          maxFeePerGas: baseFee.multipliedBy(1.13).plus(slow).integerValue(),
+        },
+        {
+          maxPriorityFeePerGas: fast,
+          maxFeePerGas: baseFee.multipliedBy(1.3).plus(fast).integerValue(),
+        },
       ],
     };
   }
@@ -312,4 +357,4 @@ class Geth extends BaseClient {
   }
 }
 
-export { Geth };
+export { Geth, EIP1559Price, EIP1559Fee };
