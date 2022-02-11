@@ -10,14 +10,15 @@ import BigNumber from 'bignumber.js';
 import { Transaction } from 'js-conflux-sdk';
 
 import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
-import { check, checkIsDefined } from '../../../basic/precondtion';
+import { checkIsDefined } from '../../../basic/precondtion';
+import { HardwareSigner } from '../../../types/hardware';
 import {
   AddressValidation,
   SignedTx,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
-import { BaseProvider } from '../../abc';
+import { BaseProvider, isHardwareSigner } from '../../abc';
 
 import { Conflux } from './conflux';
 
@@ -132,22 +133,26 @@ class Provider extends BaseProvider {
 
   async signTransaction(
     unsignedTx: UnsignedTx,
-    signers: { [address: string]: Signer },
+    signers: { [address: string]: Signer } | HardwareSigner,
   ): Promise<SignedTx> {
     const fromAddress = unsignedTx.inputs[0]?.address;
-    check(fromAddress && signers[fromAddress], 'Signer not found');
     const params = this.buildCFXUnSignedTx(unsignedTx);
     const unSignedTx: Transaction = new Transaction(params);
     const digest = keccak256(unSignedTx.encode(false));
-    const [sig, recoveryParam] = await signers[fromAddress].sign(
-      Buffer.from(digest.slice(2), 'hex'),
-    );
-    const [r, s]: [Buffer, Buffer] = [sig.slice(0, 32), sig.slice(32)];
+    let v, sig;
+    if (isHardwareSigner(signers)) {
+      [sig, v] = await signers.hardwareSign(params);
+    } else {
+      [sig, v] = await signers[fromAddress].sign(
+        Buffer.from(digest.slice(2), 'hex'),
+      );
+    }
+    const [r, s] = [sig.slice(0, 32), sig.slice(32)];
     const SignedTx = new Transaction({
       ...params,
       r: hexZeroPad('0x' + r.toString('hex'), 32),
       s: hexZeroPad('0x' + s.toString('hex'), 32),
-      v: recoveryParam,
+      v,
     });
     const rawTx: string = SignedTx.serialize();
     const txid = keccak256(rawTx);

@@ -3,6 +3,7 @@ import BigNumber from 'bignumber.js';
 import { NotImplementedError } from '../basic/exceptions';
 import { check } from '../basic/precondtion';
 import { ChainInfo, CoinInfo } from '../types/chain';
+import { HardwareSigner } from '../types/hardware';
 import {
   AddressInfo,
   AddressValidation,
@@ -140,6 +141,11 @@ abstract class SimpleClient extends BaseClient {
 
 type ClientFilter = <T extends BaseClient>(client: T) => boolean;
 
+function isHardwareSigner(
+  signer: { [p: string]: Signer } | HardwareSigner,
+): signer is HardwareSigner {
+  return typeof (signer as HardwareSigner).hardwareSign !== 'undefined';
+}
 abstract class BaseProvider {
   readonly chainInfo: ChainInfo;
   readonly clientSelector: <T extends BaseClient>(
@@ -165,7 +171,7 @@ abstract class BaseProvider {
 
   abstract signTransaction(
     unsignedTx: UnsignedTx,
-    signers: { [p: string]: Signer },
+    signers: { [p: string]: Signer } | HardwareSigner,
   ): Promise<SignedTx>;
 
   verifyTokenAddress(address: string): Promise<AddressValidation> {
@@ -189,4 +195,10 @@ abstract class BaseProvider {
   }
 }
 
-export { BaseClient, SimpleClient, BaseProvider, ClientFilter };
+export {
+  BaseClient,
+  SimpleClient,
+  BaseProvider,
+  ClientFilter,
+  isHardwareSigner,
+};

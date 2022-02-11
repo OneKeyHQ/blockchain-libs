@@ -4,13 +4,14 @@ import BigNumber from 'bignumber.js';
 import bs58 from 'bs58';
 
 import { check } from '../../../basic/precondtion';
+import { HardwareSigner } from '../../../types/hardware';
 import {
   AddressValidation,
   SignedTx,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
-import { BaseProvider } from '../../abc';
+import { BaseProvider, isHardwareSigner } from '../../abc';
 
 import { Solana } from './solana';
 class Provider extends BaseProvider {
@@ -99,7 +100,7 @@ class Provider extends BaseProvider {
 
   async signTransaction(
     unsignedTx: UnsignedTx,
-    signers: { [p: string]: Signer },
+    signers: { [p: string]: Signer } | HardwareSigner,
   ): Promise<SignedTx> {
     const sender = unsignedTx.inputs[0].address;
     const receiver = unsignedTx.outputs[0].address;
@@ -112,9 +113,13 @@ class Provider extends BaseProvider {
       unsignedTx.payload,
       tokenAddress,
     );
-    transferTx.feePayer = new PublicKey(sender);
     const signData = transferTx.serializeMessage();
-    const [sig, _] = await signers[sender].sign(signData);
+    let sig;
+    if (isHardwareSigner(signers)) {
+      [sig] = await signers.hardwareSign(signData);
+    } else {
+      [sig] = await signers[sender].sign(signData);
+    }
     check(sig.length === 64, 'signature has invalid length');
     transferTx.addSignature(new PublicKey(sender), sig);
     const txid = bs58.encode(sig);
@@ -143,6 +148,7 @@ class Provider extends BaseProvider {
   ): Promise<Transaction> {
     const transferTx = new Transaction();
     const sender = new PublicKey(fromAddr);
+    transferTx.feePayer = sender;
     const receiver = new PublicKey(toAddr);
     if (mintAddress) {
       // SPL-Token transfer

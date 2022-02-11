@@ -7,6 +7,7 @@ import BigNumber from 'bignumber.js';
 
 import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
 import { check, checkIsDefined } from '../../../basic/precondtion';
+import { HardwareSigner } from '../../../types/hardware';
 import {
   AddressValidation,
   FeePricePerUnit,
@@ -14,7 +15,7 @@ import {
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
-import { BaseProvider } from '../../abc';
+import { BaseProvider, isHardwareSigner } from '../../abc';
 
 import { BlockNative } from './blocknative';
 import { Geth } from './geth';
@@ -181,19 +182,22 @@ class Provider extends BaseProvider {
 
   async signTransaction(
     unsignedTx: UnsignedTx,
-    signers: { [address: string]: Signer },
+    signers: { [address: string]: Signer } | HardwareSigner,
   ): Promise<SignedTx> {
     const fromAddress = unsignedTx.inputs[0]?.address;
-    check(fromAddress && signers[fromAddress], 'Signer not found');
-
     const tx = this.buildEtherUnSignedTx(unsignedTx);
     const digest = keccak256(serialize(tx));
-    const [sig, recoveryParam] = await signers[fromAddress].sign(
-      Buffer.from(digest.slice(2), 'hex'),
-    );
-    const [r, s]: [Buffer, Buffer] = [sig.slice(0, 32), sig.slice(32)];
+    let recoveryParam, sig;
+    if (isHardwareSigner(signers)) {
+      [sig, recoveryParam] = await signers.hardwareSign(tx);
+    } else {
+      [sig, recoveryParam] = await signers[fromAddress].sign(
+        Buffer.from(digest.slice(2), 'hex'),
+      );
+    }
+    const [r, s] = [sig.slice(0, 32), sig.slice(32)];
     const signature = splitSignature({
-      recoveryParam: recoveryParam,
+      recoveryParam,
       r: hexZeroPad('0x' + r.toString('hex'), 32),
       s: hexZeroPad('0x' + s.toString('hex'), 32),
     });
