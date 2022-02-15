@@ -4,18 +4,21 @@ import { hexZeroPad, splitSignature } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import { serialize, UnsignedTransaction } from '@ethersproject/transactions';
 import BigNumber from 'bignumber.js';
+import * as ethUtil from 'ethereumjs-util';
 
 import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
 import { check, checkIsDefined } from '../../../basic/precondtion';
 import {
   AddressValidation,
   SignedTx,
+  TypedMessage,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
 import { Geth } from './geth';
+import { hashMessage, MessageTypes } from './sdk/message';
 
 class Provider extends BaseProvider {
   get geth(): Promise<Geth> {
@@ -187,6 +190,51 @@ class Provider extends BaseProvider {
     }
 
     return baseTx;
+  }
+
+  async signMessage(
+    message: TypedMessage,
+    signer: Signer,
+    address?: string,
+  ): Promise<string> {
+    const messageHash = hashMessage(
+      message.type as MessageTypes,
+      message.message,
+    );
+    const [sig, recId] = await signer.sign(ethUtil.toBuffer(messageHash));
+    return ethUtil.addHexPrefix(
+      Buffer.concat([sig, Buffer.from([recId + 27])]).toString('hex'),
+    );
+  }
+
+  async verifyMessage(
+    address: string,
+    message: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const recoveredAddress = await this.ecRecover(message, signature);
+    return address.toLowerCase() === recoveredAddress.toLowerCase();
+  }
+
+  async ecRecover(message: TypedMessage, signature: string): Promise<string> {
+    const messageHash = hashMessage(
+      message.type as MessageTypes,
+      message.message,
+    );
+    const hashBuffer = ethUtil.toBuffer(messageHash);
+    const sigBuffer = ethUtil.toBuffer(signature);
+    check(hashBuffer.length === 32, 'Invalid message hash length');
+    check(sigBuffer.length === 65, 'Invalid signature length');
+
+    const [r, s, v] = [
+      sigBuffer.slice(0, 32),
+      sigBuffer.slice(32, 64),
+      sigBuffer[64],
+    ];
+    const publicKey = ethUtil.ecrecover(hashBuffer, v, r, s);
+    return ethUtil.addHexPrefix(
+      ethUtil.pubToAddress(publicKey).toString('hex'),
+    );
   }
 }
 

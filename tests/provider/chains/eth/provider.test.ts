@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 
 import { Provider } from '../../../../src/provider/chains/eth';
+import { MessageTypes } from '../../../../src/provider/chains/eth/sdk/message';
 
 let provider: Provider;
 let geth: any;
@@ -404,4 +405,79 @@ test('signTransaction EIP1559', async () => {
     rawTx:
       '0x02f8770183299f8d843b9aca0085159e792961830186a094d60dd882028ecd3be2bd2bdc9d116ca28ff1033b8801809587ac41aa0080c001a077076614d925b9bc70d3c1c0d04a98962c605b94812b0703af640bbdaa9529e2a05cedb3f7dd6580f280e8f078c6b51ebfb966d2c48085e36b34da8778fbfc0121',
   });
+});
+
+test('signMessage', async () => {
+  const signer: any = {
+    sign: jest
+      .fn()
+      .mockResolvedValueOnce([
+        Buffer.from(
+          'fbbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f2',
+          'hex',
+        ),
+        0,
+      ]),
+  };
+
+  await expect(
+    provider.signMessage(
+      { message: 'Hello OneKey', type: MessageTypes.PERSONAL_SIGN },
+      signer,
+    ),
+  ).resolves.toStrictEqual(
+    '0xfbbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f21b',
+  );
+  expect(signer.sign).toHaveBeenCalledWith(
+    Buffer.from(
+      'df3619f57f8d35a3bc81a171aad15720f9b531a0707bf637ab37f6407a9e725d',
+      'hex',
+    ),
+  );
+});
+
+test('verifyMessage', async () => {
+  await expect(
+    provider.verifyMessage(
+      '0x29c76e6ad8f28bb1004902578fb108c507be341b',
+      {
+        type: MessageTypes.PERSONAL_SIGN,
+        message: 'Hello OneKey',
+      },
+      '0xfbbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f21b',
+    ),
+  ).resolves.toBe(true);
+
+  await expect(
+    provider.verifyMessage(
+      '0x29c76e6ad8f28bb1004902578fb108c507be341a',
+      {
+        type: MessageTypes.PERSONAL_SIGN,
+        message: 'Hello OneKey',
+      },
+      '0xfbbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f21b',
+    ),
+  ).resolves.toBe(false);
+});
+
+test('ecRecover', async () => {
+  await expect(
+    provider.ecRecover(
+      {
+        type: MessageTypes.PERSONAL_SIGN,
+        message: 'Hello OneKey',
+      },
+      '0xfbbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f21b',
+    ),
+  ).resolves.toBe('0x29c76e6ad8f28bb1004902578fb108c507be341b');
+
+  await expect(
+    provider.ecRecover(
+      {
+        type: MessageTypes.PERSONAL_SIGN,
+        message: 'Hello OneKey',
+      },
+      '0x1bbe375d1a893ecd6c0b07a9ddab35f652795afba9998d26ca4224c9832e779f0e6f63be32fc52012ed0db1344a57e4a065fe59bb1c87764ede419cd84cdd2f21b',
+    ),
+  ).resolves.toBe('0xa7c4a4ed7ebb0386fd5460d150a57e0d490e7463');
 });

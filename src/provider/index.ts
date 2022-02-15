@@ -11,6 +11,7 @@ import {
   PartialTokenInfo,
   SignedTx,
   TransactionStatus,
+  TypedMessage,
   UnsignedTx,
   UTXO,
 } from '../types/provider';
@@ -226,7 +227,7 @@ class ProviderController {
 
   signMessage(
     chainCode: string,
-    message: string,
+    message: TypedMessage,
     signer: Signer,
     address?: string,
   ): Promise<string> {
@@ -238,7 +239,7 @@ class ProviderController {
   verifyMessage(
     chainCode: string,
     address: string,
-    message: string,
+    message: TypedMessage,
     signature: string,
   ): Promise<boolean> {
     return this.getProvider(chainCode).then((provider) =>
