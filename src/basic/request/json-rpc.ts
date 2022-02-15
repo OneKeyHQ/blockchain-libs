@@ -15,7 +15,6 @@ class JsonRPCRequest {
     this.timeout = timeout;
 
     this.headers = {
-      'User-Agent': 'blockchain-libs',
       'Content-Type': 'application/json',
     };
     if (headers) {

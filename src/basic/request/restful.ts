@@ -18,7 +18,7 @@ class RestfulRequest {
     this.baseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     this.timeout = timeout;
 
-    this.headers = { 'User-Agent': 'blockchain-libs' };
+    this.headers = {};
     if (headers) {
       Object.assign(this.headers, headers);
     }

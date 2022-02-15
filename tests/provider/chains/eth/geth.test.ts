@@ -418,10 +418,10 @@ test('getFeePricePerUnit', async () => {
   rpc.call.mockReturnValueOnce(Promise.resolve('0x9502f9000'));
 
   await expect(geth.getFeePricePerUnit()).resolves.toStrictEqual({
-    normal: { price: new BigNumber(50000000000), waitingBlock: 4 },
+    normal: { price: new BigNumber(50000000000) },
     others: [
-      { price: new BigNumber(40000000000), waitingBlock: 40 },
-      { price: new BigNumber(60000000000), waitingBlock: 1 },
+      { price: new BigNumber(40000000000) },
+      { price: new BigNumber(60000000000) },
     ],
   });
 
