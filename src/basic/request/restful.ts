@@ -1,7 +1,6 @@
-import { URL, URLSearchParams } from 'url';
-
 import fetch, { Response } from 'cross-fetch';
 import timeoutSignal from 'timeout-signal';
+import { URL, URLSearchParams } from 'whatwg-url';
 
 import { ResponseError } from './exceptions';
 
