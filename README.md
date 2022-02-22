@@ -49,14 +49,5 @@ Commit method 2 (interactively)：
 
 ## I want to use it as a package
 
-1. [Generate PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
-   - Require `read:packages` permission only
-2. `cd $my_own_project`
-3. Add the following to your local `.npmrc`
-
-```
-@onekeyhq:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${MY_PAT}
-```
-
-4. `yarn add @onekeyhq/blockchain-libs`
+1. `cd $my_own_project`
+2. `yarn add @onekeyfe/blockchain-libs`

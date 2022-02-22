@@ -1,5 +1,5 @@
 {
-  "name": "@onekeyhq/blockchain-libs",
+  "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
   "version": "0.0.23",
   "author": "OneKey Team",
@@ -32,7 +32,7 @@
     "test:prettier": "prettier --check .",
     "unittest": "jest --coverage --silent",
     "prepack": "npm run build",
-    "clean": "rimraf dist tsconfig.tsbuildinfo onekeyhq-blockchain-libs-v*.tgz",
+    "clean": "rimraf dist tsconfig.tsbuildinfo onekeyfe-blockchain-libs-v*.tgz",
     "lint-staged": "lint-staged",
     "prepare": "husky install",
     "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md"
