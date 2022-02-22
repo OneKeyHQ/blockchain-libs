@@ -1,4 +1,4 @@
-import { BlockchainEngine } from '@onekeyhq/blockchain-libs';
+import { BlockchainEngine } from '@onekeyfe/blockchain-libs';
 import { Storage } from './storage';
 
 const config = {

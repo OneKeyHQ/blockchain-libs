@@ -12,7 +12,8 @@
     "coverage",
     "commitlint.config.js",
     "jest.config.js",
-    "jest-setup.js"
+    "jest-setup.js",
+    "example"
   ],
   "plugins": ["import", "eslint-comments", "unused-imports"],
   "extends": [

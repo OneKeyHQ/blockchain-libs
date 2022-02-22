@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@keyv/sqlite": "^2.0.2",
-    "@onekeyhq/blockchain-libs": "./package/onekeyhq-blockchain-libs.tgz",
+    "@onekeyfe/blockchain-libs": "./package/onekeyfe-blockchain-libs.tgz",
     "express": "^4.17.1",
     "http-status-codes": "^2.1.4",
     "keyv": "^4.0.3"
