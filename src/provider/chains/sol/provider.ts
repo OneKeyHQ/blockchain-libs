@@ -209,11 +209,10 @@ class Provider extends BaseProvider {
       isValid,
     };
   }
-  /***
-   * Note: this method is used to verify associatedTokenAddress instead of mintAddress(if mintAddress use verifyAddress or getTokenInfos instead)
-   *
-   */
-  async verifyTokenAddress(address: string): Promise<AddressValidation> {
+
+  async verifyAssociatedTokenAddress(
+    address: string,
+  ): Promise<AddressValidation> {
     const result = await this.verifyAddress(address);
     if (result.isValid) {
       const isOnCurve = PublicKey.isOnCurve(bs58.decode(address));
