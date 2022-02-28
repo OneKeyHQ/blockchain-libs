@@ -17,6 +17,7 @@ import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
 import { BlockBook } from './blockbook';
+import { getNetwork } from './sdk/networks';
 import { estimateVsize, loadOPReturn, PLACEHOLDER_VSIZE } from './sdk/vsize';
 
 const validator = (
@@ -32,10 +33,8 @@ enum SupportedEncodings {
 }
 
 class Provider extends BaseProvider {
-  // private _network: BitcoinJS.Network;
-
   get network(): BitcoinJS.Network {
-    return BitcoinJS.networks.bitcoin; // todo
+    return getNetwork(this.chainInfo.code);
   }
 
   get blockbook(): Promise<BlockBook> {
@@ -342,4 +341,4 @@ class Provider extends BaseProvider {
   }
 }
 
-export { Provider };
+export { Provider, SupportedEncodings };

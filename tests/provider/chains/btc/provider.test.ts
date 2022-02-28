@@ -3,7 +3,9 @@ import BigNumber from 'bignumber.js';
 import { Provider } from '../../../../src/provider/chains/btc';
 import { UnsignedTx } from '../../../../src/types/provider';
 
-const chainInfo: any = {};
+const chainInfo: any = {
+  code: 'btc',
+};
 const blockbook: any = {
   getRawTransaction: jest.fn(),
   getFeePricePerUnit: jest.fn(),
