@@ -29,6 +29,22 @@ type EIP1559Fee = {
   others?: Array<EIP1559Price>;
 };
 
+function decodeStringCallResult(hexResult: string): string {
+  if (hexResult.length <= 2) {
+    throw new Error('Invalid hex result.');
+  }
+  try {
+    return defaultAbiCoder.decode(['string'], hexResult)[0];
+  } catch (e) {
+    console.error(e);
+    // Non-standard name or symbol, type of bytes32.
+    // See 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2
+    return Buffer.from(hexResult.slice(2), 'hex')
+      .toString()
+      .replace(/\0+$/, '');
+  }
+}
+
 class Geth extends BaseClient {
   static readonly __LAST_BLOCK__ = 'latest';
   private _mmFee!: MmFee;
@@ -215,8 +231,8 @@ class Geth extends BaseClient {
       }
 
       try {
-        const [symbol] = defaultAbiCoder.decode(['string'], symbolHex);
-        const [name] = defaultAbiCoder.decode(['string'], nameHex);
+        const symbol = decodeStringCallResult(symbolHex);
+        const name = decodeStringCallResult(nameHex);
         const decimals = parseInt(decimalsHex, 16);
         check(!isNaN(decimals));
 
