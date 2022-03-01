@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+
 import fetch, { Response } from 'cross-fetch';
 import timeoutSignal from 'timeout-signal';
 import { URL, URLSearchParams } from 'whatwg-url';
@@ -66,7 +68,9 @@ class RestfulRequest {
 
     const url = this.buildUrl(path);
     const body =
-      typeof data === 'object'
+      headers['Content-Type'] === 'application/x-binary'
+        ? Buffer.from(data as string, 'hex')
+        : typeof data === 'object'
         ? json
           ? JSON.stringify(data)
           : new URLSearchParams(data).toString()
