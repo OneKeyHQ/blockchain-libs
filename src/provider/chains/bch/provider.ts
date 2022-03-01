@@ -1,8 +1,11 @@
 import bchaddr from 'bchaddrjs';
+import bitcoinMessage from 'bitcoinjs-message';
 
+import { check } from '../../../basic/precondtion';
 import {
   AddressValidation,
   SignedTx,
+  TypedMessage,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
@@ -52,6 +55,29 @@ class Provider extends BTCProvider {
   ): Promise<SignedTx> {
     unsignedTx = this.processUnsignedTxBeforeSign(unsignedTx);
     return super.signTransaction(unsignedTx, signers);
+  }
+
+  async verifyMessage(
+    address: string,
+    { message }: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const validation = await this.verifyAddress(address);
+    check(validation.isValid, 'Invalid Address');
+
+    address = bchaddr.toLegacyAddress(address);
+
+    const checkSegwitAlways =
+      validation.encoding === SupportedEncodings.p2wpkh ||
+      validation.encoding === SupportedEncodings.p2sh$p2wpkh;
+
+    return bitcoinMessage.verify(
+      message,
+      address,
+      signature,
+      this.network.messagePrefix,
+      checkSegwitAlways,
+    );
   }
 }
 

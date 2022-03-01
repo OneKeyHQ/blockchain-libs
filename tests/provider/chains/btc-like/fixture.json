@@ -28,5 +28,88 @@
         "P2WPKH": "vtc1qw508d6qejxtdg4y5r3zarvary0c5xw7kuk9r06"
       }
     }
+  },
+  "signMessage": {
+    "message": "Hello OneKey",
+    "chains": {
+      "bch": {
+        "signed": [
+          "c7a88c886a5415d60084512f0975c0e4323de0301a56606c6c1c0d71fe90d95b1616c93d2e1e596e5c0f01602248276bdbb6859d534bd894b958f208aa4d9bd7",
+          0
+        ],
+        "messageHash": "8ab4627ffc29e7fef4962ef87166d4e55317b697661a8a1c392d599f6d86e285",
+        "cases": {
+          "bitcoincash:qp63uahgrxged4z5jswyt5dn5v3lzsem6cy4spdc2h": "H8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c="
+        }
+      },
+      "ltc": {
+        "signed": [
+          "109ec881595b35439e18037233407155440bd6af458797631b2f34102bd3e43f6b8435736dfbef8f42475b4f5aa92368f3136f7e3d7855fe2b57dcf58a6b760b",
+          1
+        ],
+        "messageHash": "f85452886a090a2e19c852259ee719b52f2850a3d038e16dbc55fade3cbae253",
+        "cases": {
+          "LVuDpNCSSj6pQ7t9Pv6d6sUkLKoqDEVUnJ": "IBCeyIFZWzVDnhgDcjNAcVVEC9avRYeXYxsvNBAr0+Q/a4Q1c237749CR1tPWqkjaPMTb349eFX+K1fc9Yprdgs=",
+          "MR8UQSBr5ULwWheBHznrHk2jxyxkHQu8vB": "JBCeyIFZWzVDnhgDcjNAcVVEC9avRYeXYxsvNBAr0+Q/a4Q1c237749CR1tPWqkjaPMTb349eFX+K1fc9Yprdgs=",
+          "ltc1qw508d6qejxtdg4y5r3zarvary0c5xw7kgmn4n9": "KBCeyIFZWzVDnhgDcjNAcVVEC9avRYeXYxsvNBAr0+Q/a4Q1c237749CR1tPWqkjaPMTb349eFX+K1fc9Yprdgs="
+        }
+      },
+      "doge": {
+        "signed": [
+          "6654a5e44848a9b0a3435c114febe0cb4083a33f2387aaf8060b753013418f7e3dd3dc351509e5fb81211229a8cad18def957506086002971761337a13d46d04",
+          0
+        ],
+        "messageHash": "f7456a145a7689ce4e2a003747213d90ad0df74096abcfb34fa409def609b38d",
+        "cases": {
+          "DFpN6QqFfUm3gKNaxN6tNcab1FArL9cZLE": "H2ZUpeRISKmwo0NcEU/r4MtAg6M/I4eq+AYLdTATQY9+PdPcNRUJ5fuBIRIpqMrRje+VdQYIYAKXF2EzehPUbQQ="
+        }
+      },
+      "btg": {
+        "signed": [
+          "9430ce391cecdf2aaf63942b6fb52919585cbb7be8bc47c770bd0e8d9b22232e7033591a1dbb35f4180adf7c2a30320deb598357507824a362ce4799bbf82728",
+          1
+        ],
+        "messageHash": "c445976fc913a4ce715f7d864890aa40b8263fb32c81ad1c718bc294d5c41a3f",
+        "cases": {
+          "GUXByHDZLvU4DnVH9imSFckt3HEQ5cFgE5": "IJQwzjkc7N8qr2OUK2+1KRlYXLt76LxHx3C9Do2bIiMucDNZGh27NfQYCt98KjAyDetZg1dQeCSjYs5Hmbv4Jyg=",
+          "AZ1BpW94ubqHRzsqdfoFCMgVyN1H4CnSEp": "JJQwzjkc7N8qr2OUK2+1KRlYXLt76LxHx3C9Do2bIiMucDNZGh27NfQYCt98KjAyDetZg1dQeCSjYs5Hmbv4Jyg=",
+          "btg1qw508d6qejxtdg4y5r3zarvary0c5xw7k6w057a": "KJQwzjkc7N8qr2OUK2+1KRlYXLt76LxHx3C9Do2bIiMucDNZGh27NfQYCt98KjAyDetZg1dQeCSjYs5Hmbv4Jyg="
+        }
+      },
+      "dgb": {
+        "signed": [
+          "15a6e7483331f3c76a3c77983340a43b0ea0e020fe8b9e03f894776645a0391770514e486f25a42c2049681e5d7fa7b7e44c221b567e3dfe3f2a721bd8383b00",
+          0
+        ],
+        "messageHash": "4c89cb8c8c5308cae8e60c37b90afd19ba4151a9375c7f8ab47a86aea87fabe8",
+        "cases": {
+          "DFpN6QqFfUm3gKNaxN6tNcab1FArL9cZLE": "HxWm50gzMfPHajx3mDNApDsOoOAg/oueA/iUd2ZFoDkXcFFOSG8lpCwgSWgeXX+nt+RMIhtWfj3+PypyG9g4OwA=",
+          "SeXKCr4bJpNL9LTJcT7zbNZy9YK1Vihyox": "IxWm50gzMfPHajx3mDNApDsOoOAg/oueA/iUd2ZFoDkXcFFOSG8lpCwgSWgeXX+nt+RMIhtWfj3+PypyG9g4OwA=",
+          "dgb1qw508d6qejxtdg4y5r3zarvary0c5xw7kmudfnm": "JxWm50gzMfPHajx3mDNApDsOoOAg/oueA/iUd2ZFoDkXcFFOSG8lpCwgSWgeXX+nt+RMIhtWfj3+PypyG9g4OwA="
+        }
+      },
+      "nmc": {
+        "signed": [
+          "45bfd6508bf6c8576426a24544ca2b1d11ff7a87a28af197f4fed593d12c27de54e6df82b90c33af69e735ee64cc27ee7a6f84e13fac0cfa79907ce6348714d5",
+          0
+        ],
+        "messageHash": "c074983659aa186eb2058823bbcf506879e7ddb3f9eaba641ccc6d87872bd47d",
+        "cases": {
+          "N7FdkoPbHSxKfrSVVbRu3NZtrLqc1oKpAR": "H0W/1lCL9shXZCaiRUTKKx0R/3qHoorxl/T+1ZPRLCfeVObfgrkMM69p5zXuZMwn7npvhOE/rAz6eZB85jSHFNU="
+        }
+      },
+      "vtc": {
+        "signed": [
+          "d9499b596f345f1455ee732c440874f5078432a7b8d3a067754313b8b291b47845b545c14adb5ddd6e66970e504414027c0f20c70b3da7bdf9bc2bbe0f10732f",
+          1
+        ],
+        "messageHash": "1cb3f58b62ab66801216f99d97da83b171d69b5639bc811b76db7a397bfdd406",
+        "cases": {
+          "Vkg6Ts44mskyD668xZkxFkjqovjXX9yUzZ": "INlJm1lvNF8UVe5zLEQIdPUHhDKnuNOgZ3VDE7iykbR4RbVFwUrbXd1uZpcOUEQUAnwPIMcLPae9+bwrvg8Qcy8=",
+          "3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN": "JNlJm1lvNF8UVe5zLEQIdPUHhDKnuNOgZ3VDE7iykbR4RbVFwUrbXd1uZpcOUEQUAnwPIMcLPae9+bwrvg8Qcy8=",
+          "vtc1qw508d6qejxtdg4y5r3zarvary0c5xw7kuk9r06": "KNlJm1lvNF8UVe5zLEQIdPUHhDKnuNOgZ3VDE7iykbR4RbVFwUrbXd1uZpcOUEQUAnwPIMcLPae9+bwrvg8Qcy8="
+        }
+      }
+    }
   }
 }
