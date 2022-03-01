@@ -217,7 +217,7 @@ test('signTransaction for payment', async () => {
           },
         ],
         payload: {
-          suggestedParamsExpiredAt: 1600000000000 - 1,
+          suggestedParamsExpiredAt: 1600000000000 + 1,
           suggestedParams: {
             flatFee: false,
             fee: 0,
@@ -309,7 +309,7 @@ test('signTransaction for token transfer', async () => {
           },
         ],
         payload: {
-          suggestedParamsExpiredAt: 1600000000000 - 1,
+          suggestedParamsExpiredAt: 1600000000000 + 1,
           suggestedParams: {
             flatFee: false,
             fee: 0,
