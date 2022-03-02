@@ -67,6 +67,7 @@
     "ethereumjs-util": "^7.1.4",
     "hi-base32": "^0.5.1",
     "js-conflux-sdk": "^1.7.1",
+    "js-sha512": "^0.8.0",
     "timeout-signal": "^1.1.0",
     "tweetnacl": "^1.0.3",
     "whatwg-url": "^11.0.0"
