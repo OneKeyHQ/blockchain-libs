@@ -83,7 +83,7 @@ class Provider extends BaseProvider {
     check(
       suggestedParams &&
         suggestedParamsExpiredAt &&
-        suggestedParamsExpiredAt < Date.now(),
+        suggestedParamsExpiredAt > Date.now(),
       'Please refresh suggestedParams',
     );
 
