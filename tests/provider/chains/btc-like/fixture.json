@@ -1,0 +1,32 @@
+{
+  "pubkeyToAddress": {
+    "pubkey": "0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+    "chains": {
+      "bch": {
+        "P2PKH": "bitcoincash:qp63uahgrxged4z5jswyt5dn5v3lzsem6cy4spdc2h"
+      },
+      "ltc": {
+        "P2PKH": "LVuDpNCSSj6pQ7t9Pv6d6sUkLKoqDEVUnJ",
+        "P2SH_P2WPKH": "MR8UQSBr5ULwWheBHznrHk2jxyxkHQu8vB",
+        "P2WPKH": "ltc1qw508d6qejxtdg4y5r3zarvary0c5xw7kgmn4n9"
+      },
+      "doge": { "P2PKH": "DFpN6QqFfUm3gKNaxN6tNcab1FArL9cZLE" },
+      "btg": {
+        "P2PKH": "GUXByHDZLvU4DnVH9imSFckt3HEQ5cFgE5",
+        "P2SH_P2WPKH": "AZ1BpW94ubqHRzsqdfoFCMgVyN1H4CnSEp",
+        "P2WPKH": "btg1qw508d6qejxtdg4y5r3zarvary0c5xw7k6w057a"
+      },
+      "dgb": {
+        "P2PKH": "DFpN6QqFfUm3gKNaxN6tNcab1FArL9cZLE",
+        "P2SH_P2WPKH": "SeXKCr4bJpNL9LTJcT7zbNZy9YK1Vihyox",
+        "P2WPKH": "dgb1qw508d6qejxtdg4y5r3zarvary0c5xw7kmudfnm"
+      },
+      "nmc": { "P2PKH": "N7FdkoPbHSxKfrSVVbRu3NZtrLqc1oKpAR" },
+      "vtc": {
+        "P2PKH": "Vkg6Ts44mskyD668xZkxFkjqovjXX9yUzZ",
+        "P2SH_P2WPKH": "3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN",
+        "P2WPKH": "vtc1qw508d6qejxtdg4y5r3zarvary0c5xw7kuk9r06"
+      }
+    }
+  }
+}

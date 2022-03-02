@@ -27,13 +27,21 @@ const IMPLS: { [key: string]: any } = {
   sol: require('./chains/sol'),
   stc: require('./chains/stc'),
   near: require('./chains/near'),
+  btc: require('./chains/btc'),
+  bch: require('./chains/bch'),
+  ltc: require('./chains/btc'),
+  doge: require('./chains/btc'),
+  btg: require('./chains/btc'),
+  dgb: require('./chains/btc'),
+  nmc: require('./chains/btc'),
+  vtc: require('./chains/btc'),
 };
 
 class ProviderController {
+  chainSelector: (chainCode: string) => ChainInfo;
+
   private clientsCache: { [chainCode: string]: Array<BaseClient> } = {};
   private lastClientCache: { [chainCode: string]: [BaseClient, number] } = {};
-
-  chainSelector: (chainCode: string) => ChainInfo;
 
   constructor(chainSelector: (chainCode: string) => ChainInfo) {
     this.chainSelector = chainSelector;
