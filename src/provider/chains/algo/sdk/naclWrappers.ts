@@ -1,11 +1,10 @@
 /* Copyright (c) 2019 Algorand, llc */
 
-import * as crypto from 'crypto';
-
+import sha512 from 'js-sha512';
 import nacl from 'tweetnacl';
 
-export function genericHash(arr: crypto.BinaryLike): Uint8Array {
-  return new Uint8Array(crypto.createHash('sha512-256').update(arr).digest());
+export function genericHash(arr: sha512.Message) {
+  return sha512.sha512_256.array(arr);
 }
 
 // constants
