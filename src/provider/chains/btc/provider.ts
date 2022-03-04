@@ -5,12 +5,14 @@ import {
   WitnessUtxo,
 } from 'bip174/src/lib/interfaces';
 import * as BitcoinJS from 'bitcoinjs-lib';
+import bitcoinMessage from 'bitcoinjs-message';
 
 import { check } from '../../../basic/precondtion';
 import { verify } from '../../../secret';
 import {
   AddressValidation,
   SignedTx,
+  TypedMessage,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
@@ -46,6 +48,7 @@ class Provider extends BaseProvider {
     encoding?: string,
   ): Promise<string> {
     const pubkey = await verifier.getPubkey(true);
+    console.log('pub', pubkey.toString('hex'), encoding);
     const payment = await this.pubkeyToPayment(pubkey, encoding);
 
     const { address } = payment;
@@ -164,6 +167,58 @@ class Provider extends BaseProvider {
       txid: tx.getId(),
       rawTx: tx.toHex(),
     };
+  }
+
+  async signMessage(
+    { message }: TypedMessage,
+    signer: Signer,
+    address?: string,
+  ): Promise<string> {
+    check(address, '"Address" required');
+    const validation = await this.verifyAddress(address as string);
+    check(validation.isValid, 'Invalid Address');
+
+    let signOptions: Record<string, unknown> | undefined = undefined;
+    if (validation.encoding === SupportedEncodings.p2wpkh) {
+      signOptions = { segwitType: 'p2wpkh' };
+    } else if (validation.encoding === SupportedEncodings.p2sh$p2wpkh) {
+      signOptions = { segwitType: 'p2sh(p2wpkh)' };
+    }
+
+    const sig = await bitcoinMessage.signAsync(
+      message,
+      {
+        sign: async (digest: Uint8Array) => {
+          const [signature, recovery] = await signer.sign(Buffer.from(digest));
+          return { signature, recovery };
+        },
+      },
+      true,
+      this.network.messagePrefix,
+      signOptions,
+    );
+    return sig.toString('base64');
+  }
+
+  async verifyMessage(
+    address: string,
+    { message }: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const validation = await this.verifyAddress(address);
+    check(validation.isValid, 'Invalid Address');
+
+    const checkSegwitAlways =
+      validation.encoding === SupportedEncodings.p2wpkh ||
+      validation.encoding === SupportedEncodings.p2sh$p2wpkh;
+
+    return bitcoinMessage.verify(
+      message,
+      address,
+      signature,
+      this.network.messagePrefix,
+      checkSegwitAlways,
+    );
   }
 
   private async pubkeyToPayment(

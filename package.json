@@ -60,6 +60,7 @@
     "bignumber.js": "^9.0.1",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "^6.0.1",
+    "bitcoinjs-message": "^2.2.0",
     "bs58": "^4.0.1",
     "cosmjs-types": "^0.4.0",
     "cross-fetch": "^3.1.4",

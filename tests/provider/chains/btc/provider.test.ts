@@ -248,3 +248,72 @@ test('signTransaction', async () => {
     ],
   ]);
 });
+
+test('signMessage', async () => {
+  const signer: any = {
+    sign: jest
+      .fn()
+      .mockResolvedValue([
+        Buffer.from(
+          'c7a88c886a5415d60084512f0975c0e4323de0301a56606c6c1c0d71fe90d95b1616c93d2e1e596e5c0f01602248276bdbb6859d534bd894b958f208aa4d9bd7',
+          'hex',
+        ),
+        0,
+      ]),
+  };
+
+  const message = 'Hello OneKey';
+
+  await expect(
+    provider.signMessage(
+      { message },
+      signer,
+      '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
+    ),
+  ).resolves.toBe(
+    'H8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+  );
+  await expect(
+    provider.signMessage(
+      { message },
+      signer,
+      '3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN',
+    ),
+  ).resolves.toBe(
+    'I8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+  );
+  await expect(
+    provider.signMessage(
+      { message },
+      signer,
+      'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+    ),
+  ).resolves.toBe(
+    'J8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+  );
+});
+
+test('verifyMessage', async () => {
+  const message = 'Hello OneKey';
+  await expect(
+    provider.verifyMessage(
+      '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
+      { message },
+      'H8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+    ),
+  ).resolves.toBe(true);
+  await expect(
+    provider.verifyMessage(
+      '3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN',
+      { message },
+      'I8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+    ),
+  ).resolves.toBe(true);
+  await expect(
+    provider.verifyMessage(
+      'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
+      { message },
+      'J8eojIhqVBXWAIRRLwl1wOQyPeAwGlZgbGwcDXH+kNlbFhbJPS4eWW5cDwFgIkgna9u2hZ1TS9iUuVjyCKpNm9c=',
+    ),
+  ).resolves.toBe(true);
+});
