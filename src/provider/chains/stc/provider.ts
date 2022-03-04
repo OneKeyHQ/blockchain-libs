@@ -8,7 +8,6 @@ import {
 } from '@starcoin/starcoin';
 
 import { check } from '../../../basic/precondtion';
-import { ed25519 } from '../../../secret/curves';
 import {
   AddressValidation,
   SignedTx,
@@ -47,13 +46,13 @@ class Provider extends BaseProvider {
           ? riv.accountAddress
           : '0x' + riv.accountAddress;
       }
-      if (!nonce) {
+      if (typeof nonce === 'undefined') {
         nonce = (await (await this.starcoin).getAddresses([fromAddr]))[0]
           ?.nonce;
-        check(nonce, 'nonce is not available');
+        check(typeof nonce !== 'undefined', 'nonce is not available');
       }
       payload.expirationTime =
-        payload.expirationTime || new Date().getUTCSeconds() + 60 * 60;
+        payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
       const strTypeArgs = [tokenAddress ?? '0x1::STC::STC'];
       const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
       const functionId = '0x1::TransferScripts::peer_to_peer_v2';
@@ -74,7 +73,7 @@ class Provider extends BaseProvider {
           await this.starcoin
         ).estimateGasLimit({
           chain_id: this.chainInfo.implOptions.chainId,
-          gas_unit_price: feePricePerUnit,
+          gas_unit_price: feePricePerUnit.toNumber(),
           sender: fromAddr,
           sender_public_key: senderPublicKey,
           sequence_number: nonce,
@@ -122,7 +121,13 @@ class Provider extends BaseProvider {
     const nonce = unsignedTx.nonce;
     const expirationTime = unsignedTx.payload.expirationTime;
     const chainId = this.chainInfo.implOptions.chainId;
-    if (!fromAddr || !scriptFn || !gasLimit || !gasPrice || !nonce) {
+    if (
+      !fromAddr ||
+      !scriptFn ||
+      !gasLimit ||
+      !gasPrice ||
+      typeof nonce === 'undefined'
+    ) {
       throw new Error('invalid unsignedTx');
     } else {
       const rawTxn = utils.tx.generateRawUserTransaction(
@@ -151,8 +156,13 @@ class Provider extends BaseProvider {
       const [_signature, _] = await signers[fromAddr].sign(
         Buffer.from(msgBytes),
       );
+      const senderPublicKey = unsignedTx.inputs[0].publicKey;
+      check(
+        typeof senderPublicKey !== 'undefined',
+        'senderPublicKey is required',
+      );
       const publicKey = new starcoin_types.Ed25519PublicKey(
-        ed25519.publicFromPrivate(await signers[fromAddr].getPrvkey()),
+        Buffer.from(senderPublicKey as string, 'hex'),
       );
       const signature = new starcoin_types.Ed25519Signature(_signature);
       const transactionAuthenticatorVariantEd25519 =
