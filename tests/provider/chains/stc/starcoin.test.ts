@@ -234,7 +234,7 @@ test('estimateGasLimit', async () => {
     gas_unit_price: 1,
     sender: '0x49624992dd72da077ee19d0be210406a',
     sender_public_key:
-      '0xc375de51172059011d519df58151cca6f9f4b573756fe912bd5155ca9050571e', // should be publicKey in hex string format
+      'c375de51172059011d519df58151cca6f9f4b573756fe912bd5155ca9050571e', // should be publicKey in hex string format
     sequence_number: 63,
     max_gas_amount: 10000000,
     script: {
