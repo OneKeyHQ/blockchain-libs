@@ -35,6 +35,7 @@ const IMPLS: { [key: string]: any } = {
   dgb: require('./chains/btc'),
   nmc: require('./chains/btc'),
   vtc: require('./chains/btc'),
+  dash: require('./chains/btc'),
 };
 
 class ProviderController {
