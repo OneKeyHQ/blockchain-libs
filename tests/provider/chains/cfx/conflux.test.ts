@@ -59,11 +59,11 @@ test('getAddresses', async () => {
   expect(mockedRPC.batchCall).toHaveBeenCalledWith(
     [
       ['cfx_getBalance', ['fake_address1', Conflux.__EPOCH_TAG__]],
-      ['cfx_getTransactionCount', ['fake_address1', Conflux.__EPOCH_TAG__]],
+      ['cfx_getNextNonce', ['fake_address1', Conflux.__EPOCH_TAG__]],
       ['cfx_getBalance', ['fake_address2', Conflux.__EPOCH_TAG__]],
-      ['cfx_getTransactionCount', ['fake_address2', Conflux.__EPOCH_TAG__]],
+      ['cfx_getNextNonce', ['fake_address2', Conflux.__EPOCH_TAG__]],
       ['cfx_getBalance', ['fake_address3', Conflux.__EPOCH_TAG__]],
-      ['cfx_getTransactionCount', ['fake_address3', Conflux.__EPOCH_TAG__]],
+      ['cfx_getNextNonce', ['fake_address3', Conflux.__EPOCH_TAG__]],
     ],
     undefined,
     undefined,
