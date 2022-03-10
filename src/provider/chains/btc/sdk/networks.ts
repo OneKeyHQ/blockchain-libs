@@ -84,6 +84,18 @@ const vtc = {
   wif: 0x80,
 };
 
+const dash = {
+  messagePrefix: '\x19DarkCoin Signed Message:\n',
+  bech32: '',
+  bip32: {
+    public: 0x02fe52cc,
+    private: 0x02fe52f8,
+  },
+  pubKeyHash: 0x4c,
+  scriptHash: 0x10,
+  wif: 0xcc,
+};
+
 const extendedNetworks: Record<string, BitcoinJS.Network> = {
   ltc,
   bch,
@@ -92,6 +104,7 @@ const extendedNetworks: Record<string, BitcoinJS.Network> = {
   dgb,
   nmc,
   vtc,
+  dash,
 };
 
 const getNetwork = (chainCode: string): BitcoinJS.Network => {
