@@ -41,7 +41,7 @@ class Conflux extends BaseClient {
   ): Promise<Array<AddressInfo | undefined>> {
     const calls = addresses.reduce((acc: Array<any>, cur) => {
       acc.push(['cfx_getBalance', [cur, Conflux.__EPOCH_TAG__]]);
-      acc.push(['cfx_getTransactionCount', [cur, Conflux.__EPOCH_TAG__]]);
+      acc.push(['cfx_getNextNonce', [cur, Conflux.__EPOCH_TAG__]]);
 
       return acc;
     }, []);
