@@ -118,14 +118,13 @@ class BlockBook extends SimpleClient {
     return resp.hex;
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
+  async broadcastTransaction(rawTx: string): Promise<string> {
     try {
       const resp = await this.restful
         .get(`/api/v2/sendtx/${rawTx}`)
         .then((i) => i.json());
 
-      const txid = resp.result;
-      return typeof txid === 'string' && txid.length === 64;
+      return resp.result;
     } catch (e) {
       if (e instanceof ResponseError && e.response) {
         const error = await e.response.json();

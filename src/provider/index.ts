@@ -163,7 +163,7 @@ class ProviderController {
     );
   }
 
-  broadcastTransaction(chainCode: string, rawTx: string): Promise<boolean> {
+  broadcastTransaction(chainCode: string, rawTx: string): Promise<string> {
     return this.getClient(chainCode).then((client) =>
       client.broadcastTransaction(rawTx),
     );

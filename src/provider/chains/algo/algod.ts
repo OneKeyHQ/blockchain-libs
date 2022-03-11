@@ -143,14 +143,14 @@ class Algod extends SimpleClient {
     return TransactionStatus.CONFIRM_AND_SUCCESS;
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
+  async broadcastTransaction(rawTx: string): Promise<string> {
     const resp: any = await this.restful.post(
       '/v2/transactions',
       Buffer.from(rawTx, 'base64').toString('hex'),
       false,
       { 'Content-Type': 'application/x-binary' },
     );
-    return Boolean(typeof resp?.txid === 'string' && resp.txid);
+    return resp.txid;
   }
 
   async getSuggestedParams(): Promise<SuggestedParams> {

@@ -31,17 +31,11 @@ class Solana extends BaseClient {
     super();
     this.rpc = new JsonRPCRequest(url);
   }
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
-    let isSuccess = true;
-    try {
-      this.rpc.call(RPC_METHODS.SEND_TRANSACTION, [
-        rawTx,
-        { encoding: PARAMS_ENCODINGS.BASE64 },
-      ]);
-    } catch (error) {
-      isSuccess = false;
-    }
-    return isSuccess;
+  async broadcastTransaction(rawTx: string): Promise<string> {
+    return await this.rpc.call(RPC_METHODS.SEND_TRANSACTION, [
+      rawTx,
+      { encoding: PARAMS_ENCODINGS.BASE64 },
+    ]);
   }
 
   async getInfo(): Promise<ClientInfo> {

@@ -267,7 +267,7 @@ class Tendermint extends SimpleClient {
     return TransactionStatus.PENDING;
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
+  async broadcastTransaction(rawTx: string): Promise<string> {
     const data = {
       mode: BroadcastMode.BROADCAST_MODE_SYNC,
       tx_bytes: rawTx,
@@ -276,10 +276,7 @@ class Tendermint extends SimpleClient {
       .post('/cosmos/tx/v1beta1/txs', data, true)
       .then((i) => i.json());
 
-    return (
-      typeof resp?.tx_response?.txhash === 'string' &&
-      resp.tx_response.txhash.length === 64
-    );
+    return resp.tx_response.txhash;
   }
 }
 
