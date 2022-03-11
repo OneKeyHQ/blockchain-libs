@@ -335,21 +335,13 @@ test('getTransactionStatus but not found', async () => {
 test('broadcastTransaction', async () => {
   rpc.call.mockReturnValueOnce(
     Promise.resolve({
-      status: {
-        SuccessValue: '',
+      transaction: {
+        hash: '9bosgVDDWwG8URYwsZ5hpbaHmTiQg3zftEMgF5sjVkR1',
       },
     }),
   );
 
-  await expect(cli.broadcastTransaction('fakeTx')).resolves.toBe(true);
-});
-
-test('broadcastTransaction but failed', async () => {
-  rpc.call.mockReturnValueOnce(
-    Promise.resolve({
-      status: {},
-    }),
+  await expect(cli.broadcastTransaction('fakeTx')).resolves.toBe(
+    '9bosgVDDWwG8URYwsZ5hpbaHmTiQg3zftEMgF5sjVkR1',
   );
-
-  await expect(cli.broadcastTransaction('fakeTx')).resolves.toBe(false);
 });

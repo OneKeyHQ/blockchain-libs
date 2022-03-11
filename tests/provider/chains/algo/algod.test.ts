@@ -327,8 +327,10 @@ test('broadcastTransaction', async () => {
     )
     .mockReturnValueOnce(Promise.reject(new Error('Mock Error')));
 
-  await expect(algod.broadcastTransaction('AA==')).resolves.toBe(true);
-  await expect(algod.broadcastTransaction('AQ==')).resolves.toBe(false);
+  await expect(algod.broadcastTransaction('AA==')).resolves.toBe(
+    'FXCX7KGHFIHI3TCFQGS5WG4WWCMGGK6XD5HR6IA6TSQFR62DGLEA',
+  );
+  await expect(algod.broadcastTransaction('AQ==')).resolves.toBe('');
   await expect(algod.broadcastTransaction('Ag==')).rejects.toThrow(
     'Mock Error',
   );

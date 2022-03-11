@@ -156,7 +156,9 @@ test('broadcastTransaction', async () => {
       ),
     );
 
-  await expect(blockbook.broadcastTransaction('rawTx1')).resolves.toBe(true);
+  await expect(blockbook.broadcastTransaction('rawTx1')).resolves.toBe(
+    '2222222222222222222222222222222222222222222222222222222222222222',
+  );
   await expect(blockbook.broadcastTransaction('rawTx2')).rejects.toThrow(
     'Transaction already in block',
   );

@@ -261,9 +261,15 @@ test('getFeePricePerUnit', async () => {
 });
 
 test('broadcastTransaction', async () => {
-  mockedRPC.call.mockReturnValueOnce(Promise.resolve('everything_is_ok'));
+  mockedRPC.call.mockReturnValueOnce(
+    Promise.resolve(
+      '2id3YC2jK9G5Wo2phDx4gJVAew8DcY5NAojnVuao8rkxwPYPe8cSwE5GzhEgJA2y8fVjDEo6iR6ykBvDxrTQrtpb',
+    ),
+  );
 
-  await expect(solana.broadcastTransaction('fake_raw_tx')).resolves.toBe(true);
+  await expect(solana.broadcastTransaction('fake_raw_tx')).resolves.toBe(
+    '2id3YC2jK9G5Wo2phDx4gJVAew8DcY5NAojnVuao8rkxwPYPe8cSwE5GzhEgJA2y8fVjDEo6iR6ykBvDxrTQrtpb',
+  );
 
   expect(mockedRPC.call).toHaveBeenCalledWith('sendTransaction', [
     'fake_raw_tx',

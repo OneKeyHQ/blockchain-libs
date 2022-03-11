@@ -435,7 +435,9 @@ test('broadcastTransaction', async () => {
     ),
   );
 
-  await expect(geth.broadcastTransaction('fake_raw_tx')).resolves.toBe(true);
+  await expect(geth.broadcastTransaction('fake_raw_tx')).resolves.toBe(
+    '0x1111111111111111111111111111111111111111111111111111111111111111',
+  );
 
   expect(rpc.call).toHaveBeenCalledWith('eth_sendRawTransaction', [
     'fake_raw_tx',

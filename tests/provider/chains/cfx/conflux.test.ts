@@ -387,7 +387,9 @@ test('broadcastTransaction', async () => {
     ),
   );
 
-  await expect(conflux.broadcastTransaction('fake_raw_tx')).resolves.toBe(true);
+  await expect(conflux.broadcastTransaction('fake_raw_tx')).resolves.toBe(
+    '0x1111111111111111111111111111111111111111111111111111111111111111',
+  );
 
   expect(mockedRPC.call).toHaveBeenCalledWith('cfx_sendRawTransaction', [
     'fake_raw_tx',
