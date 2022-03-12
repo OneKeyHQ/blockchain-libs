@@ -209,9 +209,9 @@ class NearCli extends SimpleClient {
     );
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
+  async broadcastTransaction(rawTx: string): Promise<string> {
     const tx: any = await this.rpc.call('broadcast_tx_commit', [rawTx]);
-    return typeof tx.status === 'object' && 'SuccessValue' in tx.status;
+    return tx.transaction.hash;
   }
 }
 

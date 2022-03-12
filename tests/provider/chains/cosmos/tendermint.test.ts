@@ -225,7 +225,9 @@ test('broadcastTransaction', async () => {
     }),
   );
 
-  await expect(tendermint.broadcastTransaction('xxxx')).resolves.toBe(true);
+  await expect(tendermint.broadcastTransaction('xxxx')).resolves.toBe(
+    '10A100C1AF364E42DD729C1163344C1FADE3AF5805EA991FA6A5B038F1B8ACC4',
+  );
   expect(restful.post).toHaveBeenCalledWith(
     '/cosmos/tx/v1beta1/txs',
     {

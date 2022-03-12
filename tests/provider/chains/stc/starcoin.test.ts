@@ -257,7 +257,7 @@ test('broadcastTransaction', async () => {
   );
 
   await expect(stcClient.broadcastTransaction('fake_raw_tx')).resolves.toBe(
-    true,
+    '0xaa20d062eabbc4543cf2bf477135f3a06bde0135e0de2bd2aac7bea2d5da2601',
   );
 
   expect(mockedRPC.call).toHaveBeenCalledWith('txpool.submit_hex_transaction', [

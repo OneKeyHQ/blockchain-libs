@@ -40,7 +40,7 @@ abstract class BaseClient {
 
   abstract getFeePricePerUnit(): Promise<FeePricePerUnit>;
 
-  abstract broadcastTransaction(rawTx: string): Promise<boolean>;
+  abstract broadcastTransaction(rawTx: string): Promise<string>;
 
   getTokenInfos(
     tokenAddresses: Array<string>,

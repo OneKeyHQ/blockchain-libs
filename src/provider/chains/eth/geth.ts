@@ -330,9 +330,8 @@ class Geth extends BaseClient {
     };
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
-    const txid: any = await this.rpc.call('eth_sendRawTransaction', [rawTx]);
-    return typeof txid === 'string' && txid.length === 66;
+  async broadcastTransaction(rawTx: string): Promise<string> {
+    return await this.rpc.call('eth_sendRawTransaction', [rawTx]);
   }
 
   estimateGasLimit(

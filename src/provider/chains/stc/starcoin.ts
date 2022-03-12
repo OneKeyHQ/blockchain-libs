@@ -136,11 +136,8 @@ class StcClient extends BaseClient {
     };
   }
 
-  async broadcastTransaction(rawTx: string): Promise<boolean> {
-    const txid: any = await this.rpc.call('txpool.submit_hex_transaction', [
-      rawTx,
-    ]);
-    return typeof txid === 'string' && txid.length === 66;
+  async broadcastTransaction(rawTx: string): Promise<string> {
+    return await this.rpc.call('txpool.submit_hex_transaction', [rawTx]);
   }
 
   async estimateGasLimit(params: { [key: string]: any }): Promise<BigNumber> {
