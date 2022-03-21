@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js';
+
 import { BaseCurve, CurveForKD } from './curves';
 import { hmacSHA512 } from './hash';
 
@@ -5,10 +7,10 @@ type ExtendedKey = {
   key: Buffer;
   chainCode: Buffer;
 };
-const BigInt_0 = BigInt(0);
+const BigInt_0 = new BigNumber(0);
 
-function serNum(p: bigint, bits: 32 | 256): Buffer {
-  if (p < BigInt_0 || p >= BigInt(2 ** bits)) {
+function serNum(p: BigNumber, bits: 32 | 256): Buffer {
+  if (p.lt(BigInt_0) || p.gte(new BigNumber(2).pow(bits))) {
     throw Error('Overflowed.');
   }
 
@@ -21,18 +23,18 @@ function ser32(index: number): Buffer {
     throw Error('Invalid index.');
   }
 
-  return serNum(BigInt(index), 32);
+  return serNum(new BigNumber(index), 32);
 }
 
-function ser256(p: bigint): Buffer {
+function ser256(p: BigNumber): Buffer {
   return serNum(p, 256);
 }
 
-function parse256(seq: Buffer): bigint {
+function parse256(seq: Buffer): BigNumber {
   if (seq.length != 32) {
     throw Error('Invalid sequence');
   }
-  return BigInt('0x' + seq.toString('hex'));
+  return new BigNumber('0x' + seq.toString('hex'));
 }
 
 function isHardenedIndex(index: number): boolean {
@@ -71,8 +73,8 @@ class BaseBip32KeyDeriver implements Bip32KeyDeriver {
     const IL: Buffer = I.slice(0, 32);
     const chainCode: Buffer = I.slice(32, 64);
 
-    const parsedIL: bigint = parse256(IL);
-    if (parsedIL < this.curve.groupOrder && parsedIL != BigInt_0) {
+    const parsedIL: BigNumber = parse256(IL);
+    if (parsedIL.lt(this.curve.groupOrder) && !parsedIL.eq(BigInt_0)) {
       return { key: IL, chainCode: chainCode };
     }
     return this.generateMasterKeyFromSeed(I);
@@ -99,10 +101,11 @@ class BaseBip32KeyDeriver implements Bip32KeyDeriver {
       const I: Buffer = hmacSHA512(parent.chainCode, data);
       const IR: Buffer = I.slice(32, 64);
 
-      const parsedIL: bigint = parse256(I.slice(0, 32));
-      const childKey: bigint =
-        (parsedIL + parse256(parent.key)) % this.curve.groupOrder;
-      if (parsedIL < this.curve.groupOrder && childKey != BigInt_0) {
+      const parsedIL: BigNumber = parse256(I.slice(0, 32));
+      const childKey: BigNumber = parsedIL
+        .plus(parse256(parent.key))
+        .mod(this.curve.groupOrder);
+      if (parsedIL.lt(this.curve.groupOrder) && !childKey.eq(BigInt_0)) {
         return { key: ser256(childKey), chainCode: IR };
       }
 

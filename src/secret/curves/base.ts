@@ -1,3 +1,5 @@
+import BigNumber from 'bignumber.js';
+
 interface BaseCurve {
   transformPublicKey(publicKey: Buffer): Buffer;
   publicFromPrivate(privateKey: Buffer): Buffer;
@@ -6,7 +8,7 @@ interface BaseCurve {
 }
 
 interface CurveForKD extends BaseCurve {
-  groupOrder: bigint;
+  groupOrder: BigNumber;
   getChildPublicKey(IL: Buffer, parentPublicKey: Buffer): Buffer | null;
 }
 
