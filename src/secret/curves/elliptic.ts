@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import elliptic from 'elliptic';
 
 import { parse256 } from '../bip32';
@@ -7,10 +8,10 @@ import { BaseCurve, CurveForKD } from './base';
 type ELPoint = elliptic.curve.base.BasePoint;
 
 class EllipticECWrapper implements CurveForKD {
-  groupOrder: bigint;
+  groupOrder: BigNumber;
   constructor(private curve: elliptic.ec) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.groupOrder = BigInt(curve.n!.toString());
+    this.groupOrder = new BigNumber(curve.n!.toString());
   }
 
   transformPublicKey(publicKey: Buffer): Buffer {
@@ -60,7 +61,7 @@ class EllipticECWrapper implements CurveForKD {
   }
 
   getChildPublicKey(IL: Buffer, parentPublicKey: Buffer): Buffer | null {
-    if (parse256(IL) >= this.groupOrder) {
+    if (parse256(IL).gte(this.groupOrder)) {
       return null;
     }
     const p: ELPoint = this.curve.keyFromPrivate(IL).getPublic();

@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import * as bip39 from 'bip39';
 import elliptic from 'elliptic';
 
@@ -18,9 +19,9 @@ import {
   verify,
 } from '../../src/secret/index';
 
-const halfNs: Record<string, bigint> = {
-  secp256k1: BigInt(new elliptic.ec('secp256k1').nh.toString()),
-  nistp256: BigInt(new elliptic.ec('p256').nh.toString()),
+const halfNs: Record<string, BigNumber> = {
+  secp256k1: new BigNumber(new elliptic.ec('secp256k1').nh.toString()),
+  nistp256: new BigNumber(new elliptic.ec('p256').nh.toString()),
 };
 
 function isSignatureCanonical(curve: CurveName, signature: Buffer): boolean {
@@ -29,8 +30,8 @@ function isSignatureCanonical(curve: CurveName, signature: Buffer): boolean {
     // Not ecdsa.
     return true;
   }
-  const s = BigInt('0x' + signature.slice(32, 64).toString('hex'));
-  return s <= halfN;
+  const s = new BigNumber('0x' + signature.slice(32, 64).toString('hex'));
+  return s.lte(halfN);
 }
 
 const bip32TestVectors = [

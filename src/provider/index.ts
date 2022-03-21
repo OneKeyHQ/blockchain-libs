@@ -20,12 +20,12 @@ import { Signer, Verifier } from '../types/secret';
 import { BaseClient, BaseProvider, ClientFilter } from './abc';
 
 const IMPLS: { [key: string]: any } = {
-  algo: require('./chains/algo'),
+  // algo: require('./chains/algo'),
   cfx: require('./chains/cfx'),
   cosmos: require('./chains/cosmos'),
   eth: require('./chains/eth'),
   sol: require('./chains/sol'),
-  stc: require('./chains/stc'),
+  // stc: require('./chains/stc'),
   near: require('./chains/near'),
   btc: require('./chains/btc'),
   bch: require('./chains/bch'),
