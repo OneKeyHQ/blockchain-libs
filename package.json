@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -71,7 +71,7 @@
     "js-sha512": "^0.8.0",
     "timeout-signal": "^1.1.0",
     "tweetnacl": "^1.0.3",
-    "whatwg-url": "^11.0.0"
+    "whatwg-url": "^7.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
