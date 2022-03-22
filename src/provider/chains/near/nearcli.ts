@@ -32,6 +32,12 @@ function bytesJsonStringify(input: any): Buffer {
   return Buffer.from(JSON.stringify(input));
 }
 
+export type GasCostConfig = {
+  send_sir: number;
+  send_not_sir: number;
+  execution: number;
+};
+
 class NearCli extends SimpleClient {
   readonly rpc: JsonRPCRequest;
 
@@ -50,6 +56,25 @@ class NearCli extends SimpleClient {
     return {
       bestBlockNumber: blockNumber,
       isReady,
+    };
+  }
+
+  async getTxCostConfig(): Promise<Record<string, GasCostConfig>> {
+    const resp: any = await this.rpc.call('EXPERIMENTAL_protocol_config', {
+      finality: this.defaultFinality,
+    });
+    const {
+      runtime_config: {
+        transaction_costs: {
+          action_receipt_creation_config,
+          action_creation_config: { transfer_cost },
+        },
+      },
+    } = resp;
+
+    return {
+      action_receipt_creation_config,
+      transfer_cost,
     };
   }
 

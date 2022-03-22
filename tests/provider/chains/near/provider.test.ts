@@ -8,6 +8,7 @@ const cli: any = {
   getFeePricePerUnit: jest.fn(),
   getAddress: jest.fn(),
   getBestBlock: jest.fn(),
+  getTxCostConfig: jest.fn(),
 };
 const provider = new Provider(chainInfo, () => Promise.resolve(cli));
 
@@ -109,11 +110,13 @@ test('buildUnsignedTx with placeholder tx', async () => {
     payload: {},
     nonce: undefined,
     feePricePerUnit: new BigNumber('100000000'),
+    feeLimit: new BigNumber('100000000000'),
   });
 
   expect(cli.getFeePricePerUnit).toHaveBeenCalledTimes(1);
   expect(cli.getAddress).not.toHaveBeenCalled();
   expect(cli.getBestBlock).not.toHaveBeenCalled();
+  expect(cli.getTxCostConfig).not.toHaveBeenCalled();
 });
 
 test('buildUnsignedTx with general tx', async () => {
@@ -122,6 +125,18 @@ test('buildUnsignedTx with general tx', async () => {
   });
   cli.getBestBlock.mockResolvedValueOnce({
     blockHash: 'fakeBlockHash',
+  });
+  cli.getTxCostConfig.mockResolvedValueOnce({
+    action_receipt_creation_config: {
+      send_sir: 108059500000,
+      send_not_sir: 108059500000,
+      execution: 108059500000,
+    },
+    transfer_cost: {
+      send_sir: 115123062500,
+      send_not_sir: 115123062500,
+      execution: 115123062500,
+    },
   });
 
   await expect(
@@ -149,11 +164,13 @@ test('buildUnsignedTx with general tx', async () => {
     },
     nonce: 11,
     feePricePerUnit: new BigNumber('100000000'),
+    feeLimit: new BigNumber('446365125000'),
   });
 
   expect(cli.getFeePricePerUnit).not.toHaveBeenCalled();
   expect(cli.getAddress).toHaveBeenCalledWith('awesome.testnet');
   expect(cli.getBestBlock).toHaveBeenCalledTimes(1);
+  expect(cli.getTxCostConfig).toHaveBeenCalledTimes(1);
 });
 
 test('signTransaction - near transfer', async () => {

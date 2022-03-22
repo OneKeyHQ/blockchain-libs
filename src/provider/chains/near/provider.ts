@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js';
 import { baseDecode, baseEncode } from 'borsh';
 
 import {
@@ -8,7 +9,7 @@ import {
 import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
-import { NearCli } from './nearcli';
+import { GasCostConfig, NearCli } from './nearcli';
 import { PublicKey } from './sdk/key_pair';
 import * as nearTx from './sdk/transaction';
 
@@ -44,8 +45,18 @@ const packActions = (unsignedTx: UnsignedTx) => {
 };
 
 class Provider extends BaseProvider {
+  private _txCostConfig!: Record<string, GasCostConfig>;
+
   get nearCli(): Promise<NearCli> {
     return this.clientSelector((i) => i instanceof NearCli);
+  }
+
+  async getTxCostConfig(): Promise<Record<string, GasCostConfig>> {
+    if (!this._txCostConfig) {
+      this._txCostConfig = await this.nearCli.then((i) => i.getTxCostConfig());
+    }
+
+    return this._txCostConfig;
   }
 
   async pubkeyToAddress(
@@ -105,7 +116,7 @@ class Provider extends BaseProvider {
       inputs: [input],
       payload = {},
     } = unsignedTx;
-    let { nonce } = unsignedTx;
+    let { nonce, feeLimit } = unsignedTx;
 
     const feePricePerUnit =
       unsignedTx.feePricePerUnit ||
@@ -117,10 +128,26 @@ class Provider extends BaseProvider {
 
       const { blockHash } = await cli.getBestBlock();
       Object.assign(payload, { blockHash });
+
+      if (!feeLimit) {
+        const txCostConfig = await this.getTxCostConfig();
+        const { transfer_cost, action_receipt_creation_config } = txCostConfig;
+
+        if (!input.tokenAddress) {
+          feeLimit = new BigNumber(transfer_cost.execution)
+            .plus(action_receipt_creation_config.execution)
+            .multipliedBy(2);
+        } else {
+          feeLimit = new BigNumber(FT_TRANSFER_GAS); // hard to estimate gas of function call
+        }
+      }
     }
+
+    feeLimit = feeLimit || new BigNumber('100000000000');
 
     return Object.assign({}, unsignedTx, {
       feePricePerUnit,
+      feeLimit,
       nonce,
       payload,
     });
