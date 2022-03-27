@@ -1,5 +1,4 @@
 import {
-  eip712PreHash,
   hashMessage,
   MessageTypes,
 } from '../../../../../src/provider/chains/eth/sdk/message';
@@ -138,15 +137,4 @@ test('TYPE_DATA_V4', () => {
   expect(() =>
     hashMessage(MessageTypes.TYPE_DATA_V3, fixture[4].message),
   ).toThrow('Arrays are unimplemented in encodeData; use V4 extension');
-});
-
-test('eip712PreHash', () => {
-  for (const messageType of [
-    MessageTypes.TYPE_DATA_V3,
-    MessageTypes.TYPE_DATA_V4,
-  ]) {
-    for (const { message, preHash } of fixture.slice(0, 3)) {
-      expect(eip712PreHash(messageType, message)).toStrictEqual(preHash);
-    }
-  }
 });
