@@ -1,8 +1,6 @@
 import * as signUtil from '@metamask/eth-sig-util';
 import * as ethUtil from 'ethereumjs-util';
 
-import { check } from '../../../../basic/precondtion';
-
 enum MessageTypes {
   ETH_SIGN = 0,
   PERSONAL_SIGN = 1,
@@ -43,43 +41,4 @@ const hashMessage = (messageType: MessageTypes, message: string): string => {
   }
 };
 
-const eip712PreHash = (
-  messageType: MessageTypes,
-  message: string,
-): [string, string | undefined] => {
-  check(
-    messageType === MessageTypes.TYPE_DATA_V3 ||
-      messageType === MessageTypes.TYPE_DATA_V4,
-    'Only supports V3 and V4',
-  );
-
-  const version =
-    messageType === MessageTypes.TYPE_DATA_V3
-      ? signUtil.SignTypedDataVersion.V3
-      : signUtil.SignTypedDataVersion.V4;
-  const typedData = JSON.parse(message);
-
-  const sanitizedData = signUtil.TypedDataUtils.sanitizeData(typedData);
-  const domainHash = signUtil.TypedDataUtils.hashStruct(
-    'EIP712Domain',
-    sanitizedData.domain,
-    sanitizedData.types,
-    version,
-  );
-  const messageHash =
-    sanitizedData.primaryType !== 'EIP712Domain'
-      ? signUtil.TypedDataUtils.hashStruct(
-          sanitizedData.primaryType as string,
-          sanitizedData.message,
-          sanitizedData.types,
-          version,
-        )
-      : undefined;
-
-  return [
-    ethUtil.addHexPrefix(domainHash.toString('hex')),
-    messageHash && ethUtil.addHexPrefix(messageHash.toString('hex')),
-  ];
-};
-
-export { MessageTypes, hashMessage, eip712PreHash };
+export { MessageTypes, hashMessage };

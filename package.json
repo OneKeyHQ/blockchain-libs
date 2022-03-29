@@ -71,7 +71,8 @@
     "js-sha512": "^0.8.0",
     "timeout-signal": "^1.1.0",
     "tweetnacl": "^1.0.3",
-    "whatwg-url": "^7.0.0"
+    "whatwg-url": "^7.0.0",
+    "@onekeyfe/connect": "^8.7.5-extended"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",

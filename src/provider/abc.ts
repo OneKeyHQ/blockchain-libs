@@ -1,6 +1,7 @@
+import { Success, Unsuccessful } from '@onekeyfe/connect';
 import BigNumber from 'bignumber.js';
 
-import { NotImplementedError } from '../basic/exceptions';
+import { HardwareError, NotImplementedError } from '../basic/exceptions';
 import { check } from '../basic/precondtion';
 import { ChainInfo, CoinInfo } from '../types/chain';
 import {
@@ -182,6 +183,51 @@ abstract class BaseProvider {
   }
 
   verifyMessage(
+    address: string,
+    message: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    return Promise.reject(NotImplementedError);
+  }
+
+  async wrapHardwareCall<T>(
+    callee: () => Promise<Unsuccessful | Success<T>>,
+  ): Promise<T> {
+    const resp = await callee();
+    if (!resp.success) {
+      throw new HardwareError(resp.payload);
+    }
+
+    return resp.payload;
+  }
+
+  hardwareGetXpubs(
+    paths: string[],
+    showOnDevice: boolean,
+  ): Promise<{ path: string; xpub: string }[]> {
+    return Promise.reject(NotImplementedError);
+  }
+
+  hardwareGetAddress(
+    path: string,
+    showOnDevice: boolean,
+    addressToVerify?: string,
+  ): Promise<string> {
+    return Promise.reject(NotImplementedError);
+  }
+
+  hardwareSignTransaction(
+    unsignedTx: UnsignedTx,
+    signers: Record<string, string>,
+  ): Promise<SignedTx> {
+    return Promise.reject(NotImplementedError);
+  }
+
+  hardwareSignMessage(message: TypedMessage, signer: string): Promise<string> {
+    return Promise.reject(NotImplementedError);
+  }
+
+  hardwareVerifyMessage(
     address: string,
     message: TypedMessage,
     signature: string,
