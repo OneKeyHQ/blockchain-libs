@@ -1,3 +1,10 @@
+import OneKeyConnect, {
+  RefTransaction,
+  TxInputType,
+  TxOutputType,
+} from '@onekeyfe/connect';
+// @ts-ignore
+import * as pathUtils from '@onekeyfe/connect/lib/utils/pathUtils';
 import BigNumber from 'bignumber.js';
 import {
   NonWitnessUtxo,
@@ -12,8 +19,11 @@ import { verify } from '../../../secret';
 import {
   AddressValidation,
   SignedTx,
+  TxInput,
+  TxOutput,
   TypedMessage,
   UnsignedTx,
+  UTXO,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
@@ -278,7 +288,7 @@ class Provider extends BaseProvider {
     } = unsignedTx;
 
     const [inputAddressesEncodings, nonWitnessPrevTxs] =
-      await this.collectInfoForSign(unsignedTx);
+      await this.collectInfoForSoftwareSign(unsignedTx);
 
     const psbt = new BitcoinJS.Psbt({ network: this.network });
 
@@ -353,10 +363,10 @@ class Provider extends BaseProvider {
     return psbt;
   }
 
-  private async collectInfoForSign(
+  private async collectInfoForSoftwareSign(
     unsignedTx: UnsignedTx,
   ): Promise<[string[], Record<string, string>]> {
-    const { inputs, outputs } = unsignedTx;
+    const { inputs } = unsignedTx;
 
     const inputAddressesEncodings = await this.parseAddressEncodings(
       inputs.map((i) => i.address),
@@ -377,26 +387,185 @@ class Provider extends BaseProvider {
           .filter((i) => !!i) as string[],
       ),
     );
-
-    const blockbook = await this.blockbook;
-    const nonWitnessPrevTxs: Record<string, string> = {};
-
-    for (
-      let i = 0, batchSize = 5;
-      i < nonWitnessInputPrevTxids.length;
-      i += batchSize
-    ) {
-      const batchTxids = nonWitnessInputPrevTxids.slice(i, i + batchSize);
-      const txs = await Promise.all(
-        batchTxids.map((txid) => blockbook.getRawTransaction(txid)),
-      );
-      batchTxids.forEach(
-        (txid, index) => (nonWitnessPrevTxs[txid] = txs[index]),
-      );
-    }
+    const nonWitnessPrevTxs = await this.collectTxs(nonWitnessInputPrevTxids);
 
     return [inputAddressesEncodings, nonWitnessPrevTxs];
   }
+
+  private async collectTxs(txids: string[]): Promise<Record<string, string>> {
+    const blockbook = await this.blockbook;
+    const lookup: Record<string, string> = {};
+
+    for (let i = 0, batchSize = 5; i < txids.length; i += batchSize) {
+      const batchTxids = txids.slice(i, i + batchSize);
+      const txs = await Promise.all(
+        batchTxids.map((txid) => blockbook.getRawTransaction(txid)),
+      );
+      batchTxids.forEach((txid, index) => (lookup[txid] = txs[index]));
+    }
+
+    return lookup;
+  }
+
+  get hardwareCoinName(): string {
+    const name = this.chainInfo.implOptions?.hardwareCoinName;
+    check(
+      typeof name === 'string' && name,
+      `Please config hardwareCoinName for ${this.chainInfo.code}`,
+    );
+    return name;
+  }
+
+  async hardwareGetXpubs(
+    paths: string[],
+    showOnDevice: boolean,
+  ): Promise<{ path: string; xpub: string }[]> {
+    const resp = await this.wrapHardwareCall(() =>
+      OneKeyConnect.getPublicKey({
+        bundle: paths.map((path) => ({
+          path,
+          coin: this.hardwareCoinName,
+          showOnTrezor: showOnDevice,
+        })),
+      }),
+    );
+
+    return resp.map((i) => ({
+      path: i.serializedPath,
+      xpub: i.xpub,
+    }));
+  }
+
+  async hardwareGetAddress(
+    path: string,
+    showOnDevice: boolean,
+    addressToVerify?: string,
+  ): Promise<string> {
+    const params = {
+      path,
+      coin: this.hardwareCoinName,
+      showOnTrezor: showOnDevice,
+    };
+
+    typeof addressToVerify === 'string' &&
+      Object.assign(params, { address: addressToVerify });
+
+    const { address } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.getAddress(params),
+    );
+    return address;
+  }
+
+  async hardwareSignTransaction(
+    unsignedTx: UnsignedTx,
+    signers: Record<string, string>,
+  ): Promise<SignedTx> {
+    const { inputs, outputs } = unsignedTx;
+    const prevTxids = Array.from(
+      new Set(inputs.map((i) => (i.utxo as UTXO).txid)),
+    );
+    const prevTxs = await this.collectTxs(prevTxids);
+
+    const { serializedTx } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.signTransaction({
+        useEmptyPassphrase: true,
+        coin: this.hardwareCoinName,
+        inputs: inputs.map((i) => buildHardwareInput(i, signers[i.address])),
+        outputs: outputs.map((o) => buildHardwareOutput(o)),
+        refTxs: Object.values(prevTxs).map((i) => buildPrevTx(i)),
+      }),
+    );
+
+    const tx = BitcoinJS.Transaction.fromHex(serializedTx);
+
+    return { txid: tx.getId(), rawTx: serializedTx };
+  }
+
+  async hardwareSignMessage(
+    { message }: TypedMessage,
+    signer: string,
+  ): Promise<string> {
+    const { signature } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.signMessage({
+        path: signer,
+        message,
+        coin: this.hardwareCoinName,
+      }),
+    );
+    return signature as string;
+  }
+
+  async hardwareVerifyMessage(
+    address: string,
+    { message }: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const { message: resp } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.verifyMessage({
+        address,
+        signature,
+        message,
+        coin: this.hardwareCoinName,
+      }),
+    );
+
+    return resp === 'Message verified';
+  }
 }
+
+const buildPrevTx = (rawTx: string): RefTransaction => {
+  const tx = BitcoinJS.Transaction.fromHex(rawTx);
+
+  return {
+    hash: tx.getId(),
+    version: tx.version,
+    inputs: tx.ins.map((i) => ({
+      prev_hash: i.hash.reverse().toString('hex'),
+      prev_index: i.index,
+      script_sig: i.script.toString('hex'),
+      sequence: i.sequence,
+    })),
+    bin_outputs: tx.outs.map((o) => ({
+      amount: o.value,
+      script_pubkey: o.script.toString('hex'),
+    })),
+    lock_time: tx.locktime,
+  };
+};
+
+const buildHardwareInput = (input: TxInput, path: string): TxInputType => {
+  const addressN = pathUtils.getHDPath(path);
+  const scriptType = pathUtils.getScriptType(addressN);
+  const utxo = input.utxo as UTXO;
+  check(utxo);
+
+  return {
+    prev_index: utxo.vout,
+    prev_hash: utxo.txid,
+    amount: utxo.value.integerValue().toString(),
+    address_n: addressN,
+    script_type: scriptType,
+  };
+};
+
+const buildHardwareOutput = (output: TxOutput): TxOutputType => {
+  const { isCharge, bip44Path } = output.payload || {};
+
+  if (isCharge && bip44Path) {
+    const addressN = pathUtils.getHDPath(bip44Path);
+    const scriptType = pathUtils.getScriptType(addressN);
+    return {
+      script_type: scriptType,
+      address_n: addressN,
+      amount: output.value.integerValue().toString(),
+    };
+  }
+
+  return {
+    script_type: 'PAYTOADDRESS',
+    address: output.address,
+    amount: output.value.integerValue().toString(),
+  };
+};
 
 export { Provider, SupportedEncodings };
