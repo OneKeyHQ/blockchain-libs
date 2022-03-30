@@ -1,4 +1,5 @@
 import { arrayify, hexlify } from '@ethersproject/bytes';
+import OneKeyConnect from '@onekeyfe/connect';
 import {
   bcs,
   crypto_hash,
@@ -6,11 +7,13 @@ import {
   encoding as stcEncoding,
   utils,
 } from '@starcoin/starcoin';
+import * as ethUtil from 'ethereumjs-util';
 
 import { check } from '../../../basic/precondtion';
 import {
   AddressValidation,
   SignedTx,
+  TypedMessage,
   UnsignedTx,
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
@@ -114,75 +117,24 @@ class Provider extends BaseProvider {
     unsignedTx: UnsignedTx,
     signers: { [p: string]: Signer },
   ): Promise<SignedTx> {
-    const fromAddr = unsignedTx.inputs[0].address;
-    const scriptFn = unsignedTx.payload.scriptFn;
-    const gasLimit = unsignedTx.feeLimit;
-    const gasPrice = unsignedTx.feePricePerUnit;
-    const nonce = unsignedTx.nonce;
-    const expirationTime = unsignedTx.payload.expirationTime;
-    const chainId = this.chainInfo.implOptions.chainId;
-    if (
-      !fromAddr ||
-      !scriptFn ||
-      !gasLimit ||
-      !gasPrice ||
-      typeof nonce === 'undefined'
-    ) {
-      throw new Error('invalid unsignedTx');
-    } else {
-      const rawTxn = utils.tx.generateRawUserTransaction(
-        fromAddr,
-        scriptFn,
-        gasLimit.toNumber(),
-        gasPrice.toNumber(),
-        nonce,
-        expirationTime,
-        chainId,
-      );
-      const hashSeedBytes = crypto_hash
-        .createRawUserTransactionHasher()
-        .get_salt();
-      const rawUserTransactionBytes = (function () {
-        const se = new bcs.BcsSerializer();
-        rawTxn.serialize(se);
-        return se.getBytes();
-      })();
-      const msgBytes = ((a, b) => {
-        const tmp = new Uint8Array(a.length + b.length);
-        tmp.set(a, 0);
-        tmp.set(b, a.length);
-        return tmp;
-      })(hashSeedBytes, rawUserTransactionBytes);
-      const [_signature, _] = await signers[fromAddr].sign(
-        Buffer.from(msgBytes),
-      );
-      const senderPublicKey = unsignedTx.inputs[0].publicKey;
-      check(
-        typeof senderPublicKey !== 'undefined',
-        'senderPublicKey is required',
-      );
-      const publicKey = new starcoin_types.Ed25519PublicKey(
-        Buffer.from(senderPublicKey as string, 'hex'),
-      );
-      const signature = new starcoin_types.Ed25519Signature(_signature);
-      const transactionAuthenticatorVariantEd25519 =
-        new starcoin_types.TransactionAuthenticatorVariantEd25519(
-          publicKey,
-          signature,
-        );
-      const signedUserTransaction = new starcoin_types.SignedUserTransaction(
-        rawTxn,
-        transactionAuthenticatorVariantEd25519,
-      );
-      const se = new bcs.BcsSerializer();
-      signedUserTransaction.serialize(se);
-      const txid = crypto_hash
-        .createUserTransactionHasher()
-        .crypto_hash(se.getBytes());
-      const rawTx = hexlify(se.getBytes());
-      return { txid, rawTx: rawTx };
-    }
+    const [rawTxn, rawUserTransactionBytes] = buildUnsignedRawTx(
+      unsignedTx,
+      this.chainInfo.implOptions.chainId,
+    );
+    const msgBytes = hashRawTx(rawUserTransactionBytes);
+
+    const {
+      inputs: [{ address: fromAddr, publicKey: senderPublicKey }],
+    } = unsignedTx;
+    check(
+      typeof senderPublicKey !== 'undefined',
+      'senderPublicKey is required',
+    );
+
+    const [signature] = await signers[fromAddr].sign(Buffer.from(msgBytes));
+    return buildSignedTx(senderPublicKey as string, signature, rawTxn);
   }
+
   async verifyAddress(address: string): Promise<AddressValidation> {
     let isValid = true;
     let encoding = undefined;
@@ -219,6 +171,171 @@ class Provider extends BaseProvider {
       encoding,
     };
   }
+
+  async hardwareGetXpubs(
+    paths: string[],
+    showOnDevice: boolean,
+  ): Promise<{ path: string; xpub: string }[]> {
+    const resp = await this.wrapHardwareCall(() =>
+      OneKeyConnect.starcoinGetPublicKey({
+        bundle: paths.map((path) => ({ path, showOnDevice })),
+      }),
+    );
+
+    return resp.map((i) => ({
+      path: i.serializedPath,
+      xpub: i.publicKey,
+    }));
+  }
+
+  async hardwareGetAddress(
+    path: string,
+    showOnDevice: boolean,
+    addressToVerify?: string,
+  ): Promise<string> {
+    const params = {
+      path,
+      showOnDevice,
+    };
+
+    if (typeof addressToVerify === 'string') {
+      Object.assign(params, {
+        address: addressToVerify,
+      });
+    }
+    const { address } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.starcoinGetAddress(params),
+    );
+    return address;
+  }
+
+  async hardwareSignTransaction(
+    unsignedTx: UnsignedTx,
+    signers: Record<string, string>,
+  ): Promise<SignedTx> {
+    const [rawTxn, rawUserTransactionBytes] = buildUnsignedRawTx(
+      unsignedTx,
+      this.chainInfo.implOptions.chainId,
+    );
+
+    const {
+      inputs: [{ address: fromAddr, publicKey: senderPublicKey }],
+    } = unsignedTx;
+    check(
+      typeof senderPublicKey !== 'undefined',
+      'senderPublicKey is required',
+    );
+
+    const { signature } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.starcoinSignTransaction({
+        path: signers[fromAddr],
+        rawTx: Buffer.from(rawUserTransactionBytes).toString('hex'),
+      }),
+    );
+
+    return buildSignedTx(
+      senderPublicKey as string,
+      Buffer.from(signature as string, 'hex'),
+      rawTxn,
+    );
+  }
+
+  async hardwareSignMessage(
+    { message }: TypedMessage,
+    signer: string,
+  ): Promise<string> {
+    const { signature } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.starcoinSignMessage({
+        path: signer,
+        message,
+      }),
+    );
+    return ethUtil.addHexPrefix(signature as string);
+  }
+
+  async hardwareVerifyMessage(
+    publicKey: string, // require pubkey here!!
+    { message }: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const { message: resp } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.starcoinVerifyMessage({
+        publicKey,
+        message,
+        signature,
+      }),
+    );
+    return resp === 'Message verified';
+  }
 }
+
+const buildUnsignedRawTx = (
+  unsignedTx: UnsignedTx,
+  chainId: string,
+): [starcoin_types.RawUserTransaction, Uint8Array] => {
+  const fromAddr = unsignedTx.inputs[0].address;
+  const scriptFn = unsignedTx.payload.scriptFn;
+  const gasLimit = unsignedTx.feeLimit;
+  const gasPrice = unsignedTx.feePricePerUnit;
+  const nonce = unsignedTx.nonce;
+  const expirationTime = unsignedTx.payload.expirationTime;
+  if (
+    !fromAddr ||
+    !scriptFn ||
+    !gasLimit ||
+    !gasPrice ||
+    typeof nonce === 'undefined'
+  ) {
+    throw new Error('invalid unsignedTx');
+  }
+
+  const rawTxn = utils.tx.generateRawUserTransaction(
+    fromAddr,
+    scriptFn,
+    gasLimit.toNumber(),
+    gasPrice.toNumber(),
+    nonce,
+    expirationTime,
+    Number(chainId),
+  );
+
+  const serializer = new bcs.BcsSerializer();
+  rawTxn.serialize(serializer);
+
+  return [rawTxn, serializer.getBytes()];
+};
+
+const hashRawTx = (rawUserTransactionBytes: Uint8Array): Uint8Array => {
+  const hashSeedBytes = crypto_hash.createRawUserTransactionHasher().get_salt();
+  return Uint8Array.of(...hashSeedBytes, ...rawUserTransactionBytes);
+};
+
+const buildSignedTx = (
+  senderPublicKey: string,
+  rawSignature: Buffer,
+  rawTxn: starcoin_types.RawUserTransaction,
+) => {
+  const publicKey = new starcoin_types.Ed25519PublicKey(
+    Buffer.from(senderPublicKey as string, 'hex'),
+  );
+  const signature = new starcoin_types.Ed25519Signature(rawSignature);
+  const transactionAuthenticatorVariantEd25519 =
+    new starcoin_types.TransactionAuthenticatorVariantEd25519(
+      publicKey,
+      signature,
+    );
+  const signedUserTransaction = new starcoin_types.SignedUserTransaction(
+    rawTxn,
+    transactionAuthenticatorVariantEd25519,
+  );
+  const se = new bcs.BcsSerializer();
+  signedUserTransaction.serialize(se);
+  const txid = crypto_hash
+    .createUserTransactionHasher()
+    .crypto_hash(se.getBytes());
+  const rawTx = hexlify(se.getBytes());
+
+  return { txid, rawTx };
+};
 
 export { Provider };
