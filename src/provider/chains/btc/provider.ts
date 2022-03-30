@@ -7,7 +7,7 @@ import {
 import * as BitcoinJS from 'bitcoinjs-lib';
 import bitcoinMessage from 'bitcoinjs-message';
 
-import { check } from '../../../basic/precondtion';
+import { check, checkIsDefined } from '../../../basic/precondtion';
 import { verify } from '../../../secret';
 import {
   AddressValidation,
@@ -284,6 +284,9 @@ class Provider extends BaseProvider {
 
     for (let i = 0; i < inputs.length; ++i) {
       const input = inputs[i];
+      const utxo = input.utxo as UTXO;
+      check(utxo);
+
       const encoding = inputAddressesEncodings[i];
       const mixin: {
         nonWitnessUtxo?: NonWitnessUtxo;
@@ -293,39 +296,39 @@ class Provider extends BaseProvider {
 
       switch (encoding) {
         case SupportedEncodings.p2pkh:
-          mixin.nonWitnessUtxo = Buffer.from(
-            nonWitnessPrevTxs[input.utxo!.txid],
-          );
+          mixin.nonWitnessUtxo = Buffer.from(nonWitnessPrevTxs[utxo.txid]);
           break;
         case SupportedEncodings.p2wpkh:
           mixin.witnessUtxo = {
-            script: (
+            script: checkIsDefined(
               await this.pubkeyToPayment(
                 await signers[input.address].getPubkey(true),
                 encoding,
-              )
-            ).output!,
-            value: input.utxo!.value.integerValue().toNumber(),
+              ),
+            ).output as Buffer,
+            value: utxo.value.integerValue().toNumber(),
           };
           break;
         case SupportedEncodings.p2sh$p2wpkh:
           {
-            const payment = await this.pubkeyToPayment(
-              await signers[input.address].getPubkey(true),
-              encoding,
+            const payment = checkIsDefined(
+              await this.pubkeyToPayment(
+                await signers[input.address].getPubkey(true),
+                encoding,
+              ),
             );
             mixin.witnessUtxo = {
-              script: payment.output!,
-              value: input.utxo!.value.integerValue().toNumber(),
+              script: payment.output as Buffer,
+              value: utxo.value.integerValue().toNumber(),
             };
-            mixin.redeemScript = payment.redeem!.output!;
+            mixin.redeemScript = payment.redeem?.output as Buffer;
           }
           break;
       }
 
       psbt.addInput({
-        hash: input.utxo!.txid,
-        index: input.utxo!.vout,
+        hash: utxo.txid,
+        index: utxo.vout,
         ...mixin,
       });
     }
@@ -342,7 +345,7 @@ class Provider extends BaseProvider {
         data: [loadOPReturn(opReturn)],
       });
       psbt.addOutput({
-        script: embed.output!,
+        script: checkIsDefined(embed.output),
         value: 0,
       });
     }
@@ -368,7 +371,7 @@ class Provider extends BaseProvider {
         inputAddressesEncodings
           .map((encoding, index) => {
             if (encoding === SupportedEncodings.p2pkh) {
-              return inputs[index].utxo!.txid;
+              return checkIsDefined(inputs[index].utxo).txid;
             }
           })
           .filter((i) => !!i) as string[],
