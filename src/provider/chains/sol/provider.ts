@@ -1,3 +1,4 @@
+import OneKeyConnect from '@onekeyfe/connect';
 import * as splToken from '@solana/spl-token';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';
@@ -13,6 +14,7 @@ import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
 import { Solana } from './solana';
+
 class Provider extends BaseProvider {
   get solana(): Promise<Solana> {
     return this.clientSelector((i) => i instanceof Solana);
@@ -220,6 +222,75 @@ class Provider extends BaseProvider {
       result.isValid = !isOnCurve;
     }
     return result;
+  }
+
+  async hardwareGetXpubs(
+    paths: string[],
+    showOnDevice: boolean,
+  ): Promise<{ path: string; xpub: string }[]> {
+    const resp = await this.wrapHardwareCall(() =>
+      OneKeyConnect.solanaGetAddress({
+        bundle: paths.map((path) => ({ path, showOnDevice })),
+      }),
+    );
+    return resp.map((i) => ({
+      path: i.serializedPath,
+      xpub: new PublicKey(i.address as string).toBuffer().toString('hex'), // public key here, not xpub
+    }));
+  }
+
+  async hardwareGetAddress(
+    path: string,
+    showOnDevice: boolean,
+    addressToVerify?: string,
+  ): Promise<string> {
+    const payload = {
+      path,
+      showOnDevice,
+    };
+
+    if (typeof addressToVerify === 'string') {
+      Object.assign(payload, { address: addressToVerify });
+    }
+
+    const { address } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.solanaGetAddress(payload),
+    );
+    return address as string;
+  }
+
+  async hardwareSignTransaction(
+    unsignedTx: UnsignedTx,
+    signers: Record<string, string>,
+  ): Promise<SignedTx> {
+    const {
+      inputs: [{ address: sender }],
+      outputs: [{ address: receiver, value: amount, tokenAddress }],
+    } = unsignedTx;
+
+    const transferTx = await this.buildTx(
+      sender,
+      receiver,
+      amount,
+      unsignedTx.payload,
+      tokenAddress,
+    );
+    transferTx.feePayer = new PublicKey(sender);
+    const signData = transferTx.serializeMessage();
+
+    const { signature } = await this.wrapHardwareCall(() =>
+      OneKeyConnect.solanaSignTransaction({
+        path: signers[sender],
+        rawTx: bs58.encode(signData),
+      }),
+    );
+    const signatureBuffer = bs58.decode(signature);
+    check(signatureBuffer.length === 64, 'signature has invalid length');
+    transferTx.addSignature(new PublicKey(sender), signatureBuffer);
+
+    const txid = signature;
+    const rawTx = transferTx.serialize().toString('base64');
+    return { txid, rawTx };
   }
 }
 

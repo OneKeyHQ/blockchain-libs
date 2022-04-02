@@ -1275,10 +1275,10 @@
     tiny-worker "^2.3.0"
     ws "^7.4.0"
 
-"@onekeyfe/connect@^8.7.6-extended":
-  version "8.7.6-extended"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/connect/-/connect-8.7.6-extended.tgz#209b89a32ce37e87da95dab99b480dabad19c218"
-  integrity sha512-yL7EG2ALUptEY7JIdFhRnujvBkbWC4tf3VsvpYryiFfscLz7dT4xIR9th2g+ZUEvBFTnnbpK5M0jk3hSgLv5QQ==
+"@onekeyfe/connect@^8.7.7-extended":
+  version "8.7.7-extended"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/connect/-/connect-8.7.7-extended.tgz#377295c69bb1fae84aa46e8c1b3472923793ef18"
+  integrity sha512-adEGKZf/EN9Vazfb9rM28fNlH35bPXajdXM3w58m/EPMB8bHSpQKeKkH3RPOXzKJwCxWdbagdaA+807dYujsEw==
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@conflux-dev/conflux-address-js" "^1.3.12"
