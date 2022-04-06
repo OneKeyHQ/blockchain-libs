@@ -172,6 +172,44 @@ class Provider extends BaseProvider {
     };
   }
 
+  async signMessage(
+    { message }: TypedMessage,
+    signer: Signer,
+    address?: string,
+  ): Promise<string> {
+    const privateKey = await signer.getPrvkey();
+    const { signature } = await utils.signedMessage.signMessage(
+      message,
+      privateKey.toString('hex'),
+    );
+    return signature;
+  }
+
+  async verifyMessage(
+    publicKey: string, // require pubkey here!!
+    { message }: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    // starcoin sdk doesn't provide a direct method to verify message, need to
+    // build up a signedMessage ourselves.
+    const messageBytes = new Uint8Array(Buffer.from(message, 'utf8'));
+    const signedMessageHex = await utils.signedMessage.generateSignedMessage(
+      new starcoin_types.SigningMessage(messageBytes),
+      parseInt(this.chainInfo.implOptions.chainId),
+      publicKey,
+      signature,
+    );
+    try {
+      const address = await utils.signedMessage.recoverSignedMessageAddress(
+        signedMessageHex,
+      );
+      return address === stcEncoding.publicKeyToAddress(publicKey);
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
+
   async hardwareGetXpubs(
     paths: string[],
     showOnDevice: boolean,
