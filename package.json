@@ -71,7 +71,7 @@
     "timeout-signal": "^1.1.0",
     "tweetnacl": "^1.0.3",
     "whatwg-url": "^7.0.0",
-    "@onekeyfe/connect": "^8.7.5-extended"
+    "@onekeyfe/connect": "^8.7.6-extended"
   },
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",

@@ -470,6 +470,13 @@
   dependencies:
     jsbi "^3.1.4"
 
+"@conflux-dev/conflux-address-js@^1.3.12":
+  version "1.3.13"
+  resolved "https://registry.yarnpkg.com/@conflux-dev/conflux-address-js/-/conflux-address-js-1.3.13.tgz#055909fe15e0eaa9ab890061a4845f323923a6ae"
+  integrity sha512-gFmo1goyt3wTauyRSfIooymaJSj+e7Lv4gRXpUQA+DZnJWsdPTuoPTKWLrQ6e661RTSFpcusmDrq6j6FWP9njw==
+  dependencies:
+    jsbi "^3.1.4"
+
 "@cspotcode/source-map-consumer@0.8.0":
   version "0.8.0"
   resolved "https://registry.npmjs.org/@cspotcode/source-map-consumer/-/source-map-consumer-0.8.0.tgz#33bf4b7b39c178821606f669bbc447a6a629786b"
@@ -1268,12 +1275,13 @@
     tiny-worker "^2.3.0"
     ws "^7.4.0"
 
-"@onekeyfe/connect@^8.7.5-extended":
-  version "8.7.5-extended"
-  resolved "https://registry.yarnpkg.com/@onekeyfe/connect/-/connect-8.7.5-extended.tgz#f2c2e28528cc26cbedc9eed251261cf5592fa3d5"
-  integrity sha512-HpSl6QKoNcPw9LYfl0KSsUVl1zVY7UXMAHQ1sBXgIivgE85EQWRZzlm0qUHiVi5rM6cez3LyMqBgIHt0lhAq9A==
+"@onekeyfe/connect@^8.7.6-extended":
+  version "8.7.6-extended"
+  resolved "https://registry.yarnpkg.com/@onekeyfe/connect/-/connect-8.7.6-extended.tgz#209b89a32ce37e87da95dab99b480dabad19c218"
+  integrity sha512-yL7EG2ALUptEY7JIdFhRnujvBkbWC4tf3VsvpYryiFfscLz7dT4xIR9th2g+ZUEvBFTnnbpK5M0jk3hSgLv5QQ==
   dependencies:
     "@babel/runtime" "^7.12.5"
+    "@conflux-dev/conflux-address-js" "^1.3.12"
     "@onekeyfe/blockchain-link" "1.0.19"
     "@onekeyfe/link" "1.7.5"
     "@onekeyfe/rollout" "1.0.6"
