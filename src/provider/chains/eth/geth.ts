@@ -343,7 +343,7 @@ class Geth extends BaseClient {
     return this.rpc.call('eth_estimateGas', [
       {
         from: fromAddress,
-        to: toAddress,
+        to: toAddress || undefined, // undefined is for deploy contract calls.
         value: value,
         data: data || '0x',
       },
