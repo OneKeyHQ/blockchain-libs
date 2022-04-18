@@ -97,7 +97,8 @@ class Provider extends BaseProvider {
 
         feeLimit =
           tokenAddress ||
-          (await this.geth.then((client) => client.isContract(toAddress)))
+          ((await this.verifyAddress(toAddress)).isValid &&
+            (await this.geth.then((client) => client.isContract(toAddress))))
             ? estimatedGasLimitBN.multipliedBy(multiplier).integerValue()
             : estimatedGasLimitBN;
       }
@@ -164,7 +165,7 @@ class Provider extends BaseProvider {
     const value = isERC20Transfer ? '0x0' : toBigIntHex(output.value);
 
     const baseTx = {
-      to: toAddress,
+      to: toAddress || undefined, // undefined is for deploy contract calls.
       value,
       gasLimit: toBigIntHex(checkIsDefined(unsignedTx.feeLimit)),
       nonce: checkIsDefined(unsignedTx.nonce),
