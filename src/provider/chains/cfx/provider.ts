@@ -8,8 +8,10 @@ import { hexZeroPad } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import OneKeyConnect from '@onekeyfe/connect';
 import BigNumber from 'bignumber.js';
+import { getMessage } from 'cip-23';
 import * as ethUtil from 'ethereumjs-util';
-import { Transaction } from 'js-conflux-sdk';
+// @ts-ignore: has no exported member 'PersonalMessage'
+import { Message, PersonalMessage, Transaction } from 'js-conflux-sdk';
 
 import { fromBigIntHex, toBigIntHex } from '../../../basic/bignumber-plus';
 import { check, checkIsDefined } from '../../../basic/precondtion';
@@ -25,9 +27,33 @@ import { MessageTypes } from '../eth/sdk/message';
 
 import { Conflux } from './conflux';
 
+function hashCfxMessage(typedMessage: TypedMessage): string {
+  const { type, message } = typedMessage;
+  switch (type as MessageTypes) {
+    case undefined:
+    case MessageTypes.ETH_SIGN:
+      return new Message(message).hash;
+    case MessageTypes.PERSONAL_SIGN:
+      return new PersonalMessage(message).hash;
+    case MessageTypes.TYPE_DATA_V3:
+    case MessageTypes.TYPE_DATA_V4:
+      return keccak256(getMessage(JSON.parse(message)));
+    default:
+      throw new Error(`Invalid messageType: ${type}`);
+  }
+}
+
 class Provider extends BaseProvider {
   get conflux(): Promise<Conflux> {
     return this.clientSelector((i) => i instanceof Conflux);
+  }
+
+  private internalPubkeyToAddress(pubkey: Buffer): string {
+    const ethAddress = this.ethAddressToCfxAddress(
+      keccak256(pubkey).slice(-40),
+    );
+    const networkID = parseInt(this.chainInfo.implOptions.chainId);
+    return toCfxAddress(ethAddress, networkID);
   }
 
   verifyAddress(address: string): Promise<AddressValidation> {
@@ -44,13 +70,10 @@ class Provider extends BaseProvider {
     verifier: Verifier,
     encoding?: string | undefined,
   ): Promise<string> {
-    const pubkey = await verifier.getPubkey(false);
-    const ethAddress = this.ethAddressToCfxAddress(
-      keccak256(pubkey.slice(1)).slice(-40),
-    );
-    const networkID = parseInt(this.chainInfo.implOptions.chainId);
-    return toCfxAddress(ethAddress, networkID);
+    const uncompressPubKey = await verifier.getPubkey(false);
+    return this.internalPubkeyToAddress(uncompressPubKey.slice(1));
   }
+
   /**
    * transform the eth address to cfx format address
    * @param address the eth format address {string}
@@ -305,6 +328,30 @@ class Provider extends BaseProvider {
     }
 
     throw new Error('Not supported');
+  }
+
+  async signMessage(
+    message: TypedMessage,
+    signer: Signer,
+    address?: string,
+  ): Promise<string> {
+    return Message.sign(
+      '0x' + (await signer.getPrvkey()).toString('hex'),
+      hashCfxMessage(message),
+    );
+  }
+
+  async verifyMessage(
+    address: string,
+    message: TypedMessage,
+    signature: string,
+  ): Promise<boolean> {
+    const messageHash = hashCfxMessage(message);
+    // Message.recover returns a string with 0x prefix.
+    const publicKey = Message.recover(signature, messageHash).slice(2);
+    return Promise.resolve(
+      address === this.internalPubkeyToAddress(Buffer.from(publicKey, 'hex')),
+    );
   }
 }
 
