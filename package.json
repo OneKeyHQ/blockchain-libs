@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -48,7 +48,6 @@
   "dependencies": {
     "@conflux-dev/conflux-address-js": "^1.3.11",
     "@metamask/eth-sig-util": "^4.0.0",
-    "@onekeyfe/connect": "^8.7.7-extended",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.29.2",
     "@starcoin/starcoin": "^1.6.2",
@@ -77,6 +76,7 @@
   "devDependencies": {
     "@commitlint/cli": "^13.1.0",
     "@commitlint/config-conventional": "^13.1.0",
+    "@onekeyfe/js-sdk": "*",
     "@types/bchaddrjs": "^0.4.0",
     "@types/bs58": "^4.0.1",
     "@types/elliptic": "^6.4.13",
@@ -99,6 +99,9 @@
     "ts-jest": "^27.0.5",
     "ts-node": "^10.3.0",
     "typescript": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@onekeyfe/js-sdk": "*"
   },
   "husky": {
     "hooks": {

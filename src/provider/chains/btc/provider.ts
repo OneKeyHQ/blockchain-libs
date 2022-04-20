@@ -2,9 +2,9 @@ import OneKeyConnect, {
   RefTransaction,
   TxInputType,
   TxOutputType,
-} from '@onekeyfe/connect';
+} from '@onekeyfe/js-sdk';
 // @ts-ignore
-import * as pathUtils from '@onekeyfe/connect/lib/utils/pathUtils';
+import * as pathUtils from '@onekeyfe/js-sdk/lib/utils/pathUtils';
 import BigNumber from 'bignumber.js';
 import {
   NonWitnessUtxo,
