@@ -6,7 +6,7 @@ import {
 import { defaultAbiCoder } from '@ethersproject/abi';
 import { hexZeroPad } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
-import OneKeyConnect from '@onekeyfe/connect';
+import OneKeyConnect from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
 import { getMessage } from 'cip-23';
 import * as ethUtil from 'ethereumjs-util';

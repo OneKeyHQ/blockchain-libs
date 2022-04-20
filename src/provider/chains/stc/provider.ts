@@ -1,5 +1,5 @@
 import { arrayify, hexlify } from '@ethersproject/bytes';
-import OneKeyConnect from '@onekeyfe/connect';
+import OneKeyConnect from '@onekeyfe/js-sdk';
 import {
   bcs,
   crypto_hash,

@@ -1,4 +1,4 @@
-import OneKeyConnect from '@onekeyfe/connect';
+import OneKeyConnect from '@onekeyfe/js-sdk';
 import * as splToken from '@solana/spl-token';
 import { PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import BigNumber from 'bignumber.js';

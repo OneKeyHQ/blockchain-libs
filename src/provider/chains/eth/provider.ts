@@ -3,7 +3,7 @@ import { getAddress } from '@ethersproject/address';
 import { hexZeroPad, splitSignature } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import { serialize, UnsignedTransaction } from '@ethersproject/transactions';
-import OneKeyConnect from '@onekeyfe/connect';
+import OneKeyConnect from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
 import * as ethUtil from 'ethereumjs-util';
 

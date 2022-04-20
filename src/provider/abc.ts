@@ -1,4 +1,4 @@
-import { Success, Unsuccessful } from '@onekeyfe/connect';
+import { Success, Unsuccessful } from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
 
 import { HardwareError, NotImplementedError } from '../basic/exceptions';
