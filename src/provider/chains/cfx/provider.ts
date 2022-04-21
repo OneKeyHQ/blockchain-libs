@@ -8,7 +8,6 @@ import { hexZeroPad } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import OneKeyConnect from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
-import { getMessage } from 'cip-23';
 import * as ethUtil from 'ethereumjs-util';
 // @ts-ignore: has no exported member 'PersonalMessage'
 import { Message, PersonalMessage, Transaction } from 'js-conflux-sdk';
@@ -35,9 +34,11 @@ function hashCfxMessage(typedMessage: TypedMessage): string {
       return new Message(message).hash;
     case MessageTypes.PERSONAL_SIGN:
       return new PersonalMessage(message).hash;
-    case MessageTypes.TYPE_DATA_V3:
-    case MessageTypes.TYPE_DATA_V4:
-      return keccak256(getMessage(JSON.parse(message)));
+    // TODO: cip-23 depends on @findeth/abi which makes builds fail on android
+    // import { getMessage } from 'cip-23';
+    // case MessageTypes.TYPE_DATA_V3:
+    // case MessageTypes.TYPE_DATA_V4:
+    //   return keccak256(getMessage(JSON.parse(message)));
     default:
       throw new Error(`Invalid messageType: ${type}`);
   }
