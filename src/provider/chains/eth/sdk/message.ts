@@ -1,4 +1,5 @@
 import * as signUtil from '@metamask/eth-sig-util';
+import { legacyToBuffer } from '@metamask/eth-sig-util/dist/utils';
 import * as ethUtil from 'ethereumjs-util';
 
 enum MessageTypes {
@@ -15,7 +16,7 @@ const hashMessage = (messageType: MessageTypes, message: string): string => {
       return ethUtil.addHexPrefix(message);
     case MessageTypes.PERSONAL_SIGN:
       return ethUtil.addHexPrefix(
-        ethUtil.hashPersonalMessage(Buffer.from(message)).toString('hex'),
+        ethUtil.hashPersonalMessage(legacyToBuffer(message)).toString('hex'),
       );
     case MessageTypes.TYPE_DATA_V1:
       return ethUtil.addHexPrefix(
