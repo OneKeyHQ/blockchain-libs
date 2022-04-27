@@ -3,6 +3,10 @@ import { getAddress } from '@ethersproject/address';
 import { hexZeroPad, splitSignature } from '@ethersproject/bytes';
 import { keccak256 } from '@ethersproject/keccak256';
 import { serialize, UnsignedTransaction } from '@ethersproject/transactions';
+import {
+  getEncryptionPublicKey,
+  decrypt as mmSigUtilDecrypt,
+} from '@metamask/eth-sig-util';
 import OneKeyConnect from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
 import * as ethUtil from 'ethereumjs-util';
@@ -237,6 +241,22 @@ class Provider extends BaseProvider {
     return ethUtil.addHexPrefix(
       ethUtil.pubToAddress(publicKey).toString('hex'),
     );
+  }
+
+  // The below two mm- methods are very specific functions needed to mimic a
+  // metamask provider.
+  async mmDecrypt(serializedMessage: string, signer: Signer): Promise<string> {
+    const encryptedData = JSON.parse(
+      ethUtil.toBuffer(serializedMessage).toString(),
+    );
+    return mmSigUtilDecrypt({
+      encryptedData,
+      privateKey: (await signer.getPrvkey()).toString('hex'),
+    });
+  }
+
+  async mmGetPublicKey(signer: Signer): Promise<string> {
+    return getEncryptionPublicKey((await signer.getPrvkey()).toString('hex'));
   }
 
   async hardwareGetXpubs(
