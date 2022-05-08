@@ -13,9 +13,11 @@ import {
 } from 'bip174/src/lib/interfaces';
 import * as BitcoinJS from 'bitcoinjs-lib';
 import bitcoinMessage from 'bitcoinjs-message';
+import bs58check from 'bs58check';
 
 import { check, checkIsDefined } from '../../../basic/precondtion';
-import { verify } from '../../../secret';
+import { CKDPub, compressPublicKey, verify } from '../../../secret';
+import { secp256k1 } from '../../../secret/curves';
 import {
   AddressValidation,
   SignedTx,
@@ -29,8 +31,24 @@ import { Signer, Verifier } from '../../../types/secret';
 import { BaseProvider } from '../../abc';
 
 import { BlockBook } from './blockbook';
-import { getNetwork } from './sdk/networks';
+import AddressEncodings from './sdk/addressEncodings';
+import { getNetwork, Network } from './sdk/networks';
 import { estimateVsize, loadOPReturn, PLACEHOLDER_VSIZE } from './sdk/vsize';
+
+type GetAccountParams =
+  | {
+      type: 'simple';
+      xpub: string;
+    }
+  | {
+      type: 'details';
+      xpub: string;
+    }
+  | {
+      type: 'history';
+      xpub: string;
+      to?: number;
+    };
 
 const validator = (
   pubkey: Buffer,
@@ -38,14 +56,13 @@ const validator = (
   signature: Buffer,
 ): boolean => verify('secp256k1', pubkey, msghash, signature);
 
-enum SupportedEncodings {
-  p2pkh = 'P2PKH',
-  p2sh$p2wpkh = 'P2SH_P2WPKH',
-  p2wpkh = 'P2WPKH',
-}
-
 class Provider extends BaseProvider {
-  get network(): BitcoinJS.Network {
+  private _versionBytesToEncodings?: {
+    public: Record<number, Array<AddressEncodings>>;
+    private: Record<number, Array<AddressEncodings>>;
+  };
+
+  get network(): Network {
     return getNetwork(this.chainInfo.code);
   }
 
@@ -53,13 +70,177 @@ class Provider extends BaseProvider {
     return this.clientSelector((client) => client instanceof BlockBook);
   }
 
+  get versionBytesToEncodings(): {
+    public: Record<number, Array<AddressEncodings>>;
+    private: Record<number, Array<AddressEncodings>>;
+  } {
+    if (typeof this._versionBytesToEncodings === 'undefined') {
+      const network = this.network;
+      const tmp = {
+        public: { [network.bip32.public]: [AddressEncodings.P2PKH] },
+        private: { [network.bip32.private]: [AddressEncodings.P2PKH] },
+      };
+      Object.entries(network.segwitVersionBytes || {}).forEach(
+        ([
+          encoding,
+          { public: publicVersionBytes, private: privateVersionBytes },
+        ]) => {
+          tmp.public[publicVersionBytes] = [
+            ...(tmp.public[publicVersionBytes] || []),
+            encoding as AddressEncodings,
+          ];
+          tmp.private[privateVersionBytes] = [
+            ...(tmp.private[privateVersionBytes] || []),
+            encoding as AddressEncodings,
+          ];
+        },
+      );
+      this._versionBytesToEncodings = tmp;
+    }
+    return this._versionBytesToEncodings;
+  }
+
+  private isValidExtendedKey(
+    xkey: string | Buffer,
+    category: 'pub' | 'prv',
+  ): boolean {
+    const decodedXkey =
+      typeof xkey === 'string' ? bs58check.decode(xkey) : xkey;
+    if (decodedXkey.length !== 78) {
+      return false;
+    }
+    const versionBytes = parseInt(decodedXkey.slice(0, 4).toString('hex'), 16);
+    if (category === 'pub') {
+      return (
+        typeof this.versionBytesToEncodings.public[versionBytes] !== 'undefined'
+      );
+    }
+    return (
+      typeof this.versionBytesToEncodings.private[versionBytes] !== 'undefined'
+    );
+  }
+
+  isValidXpub(xpub: string | Buffer): boolean {
+    return this.isValidExtendedKey(xpub, 'pub');
+  }
+
+  isValidXprv(xprv: string | Buffer): boolean {
+    return this.isValidExtendedKey(xprv, 'prv');
+  }
+
+  xprvToXpub(xprv: string): string {
+    const decodedXprv = bs58check.decode(xprv);
+    check(this.isValidXprv(decodedXprv));
+    const privateKey = decodedXprv.slice(46, 78);
+    const publicKey = compressPublicKey(
+      'secp256k1',
+      secp256k1.publicFromPrivate(privateKey),
+    );
+    return bs58check.encode(
+      Buffer.concat([decodedXprv.slice(0, 45), publicKey]),
+    );
+  }
+
+  getAccount(
+    params: GetAccountParams,
+    addressEncoding?: AddressEncodings,
+  ): Promise<any> {
+    const decodedXpub = bs58check.decode(params.xpub);
+    check(this.isValidXpub(decodedXpub));
+    const versionBytes = parseInt(decodedXpub.slice(0, 4).toString('hex'), 16);
+    const encoding =
+      addressEncoding ?? this.versionBytesToEncodings.public[versionBytes][0];
+    check(typeof encoding !== 'undefined');
+
+    let usedXpub = params.xpub;
+    switch (encoding) {
+      case AddressEncodings.P2PKH:
+        usedXpub = `pkh(${params.xpub})`;
+        break;
+      case AddressEncodings.P2SH_P2WPKH:
+        usedXpub = `sh(wpkh(${params.xpub}))`;
+        break;
+      case AddressEncodings.P2WPKH:
+        usedXpub = `wpkh(${params.xpub})`;
+        break;
+      default:
+      // no-op
+    }
+
+    let requestParams = {};
+    switch (params.type) {
+      case 'simple':
+        requestParams = { details: 'basic' };
+        break;
+      case 'details':
+        requestParams = { details: 'tokenBalances', tokens: 'derived' };
+        break;
+      case 'history':
+        requestParams = { details: 'txs', pageSize: 50, to: params.to };
+        break;
+      default:
+      // no-op
+    }
+
+    return this.blockbook.then((client) =>
+      client.getAccount(usedXpub, requestParams),
+    );
+  }
+
+  xpubToAddresses(
+    xpub: string,
+    relativePaths: Array<string>,
+    addressEncoding?: AddressEncodings,
+  ): Record<string, string> {
+    // Only used to generate addresses locally.
+    const decodedXpub = bs58check.decode(xpub);
+    const versionBytes = parseInt(decodedXpub.slice(0, 4).toString('hex'), 16);
+    const encoding =
+      addressEncoding ?? this.versionBytesToEncodings.public[versionBytes][0];
+
+    const ret: Record<string, string> = {};
+
+    const startExtendedKey = {
+      chainCode: decodedXpub.slice(13, 45),
+      key: decodedXpub.slice(45, 78),
+    };
+
+    const cache = new Map();
+    for (const path of relativePaths) {
+      let extendedKey = startExtendedKey;
+      let relPath = '';
+
+      const parts = path.split('/');
+      for (const part of parts) {
+        relPath += relPath === '' ? part : `/${part}`;
+        if (cache.has(relPath)) {
+          extendedKey = cache.get(relPath);
+          continue;
+        }
+
+        const index = part.endsWith("'")
+          ? parseInt(part.slice(0, -1)) + 2 ** 31
+          : parseInt(part);
+        extendedKey = CKDPub('secp256k1', extendedKey, index);
+        cache.set(relPath, extendedKey);
+      }
+
+      const { address } = this.pubkeyToPayment(extendedKey.key, encoding);
+      if (typeof address === 'string' && address.length > 0) {
+        ret[path] = address;
+      }
+    }
+
+    return ret;
+  }
+
   async pubkeyToAddress(
     verifier: Verifier,
-    encoding?: string,
+    encoding: AddressEncodings,
   ): Promise<string> {
     const pubkey = await verifier.getPubkey(true);
     console.log('pub', pubkey.toString('hex'), encoding);
-    const payment = await this.pubkeyToPayment(pubkey, encoding);
+    const payment = this.pubkeyToPayment(pubkey, encoding);
 
     const { address } = payment;
     check(typeof address === 'string' && address);
@@ -75,12 +256,13 @@ class Provider extends BaseProvider {
         decoded.version === this.network.pubKeyHash &&
         decoded.hash.length === 20
       ) {
-        encoding = SupportedEncodings.p2pkh;
+        encoding = AddressEncodings.P2PKH;
       } else if (
         decoded.version === this.network.scriptHash &&
         decoded.hash.length === 20
       ) {
-        encoding = SupportedEncodings.p2sh$p2wpkh; // Cannot distinguish between legacy P2SH and P2SH_P2WPKH
+        // Cannot distinguish between legacy P2SH and P2SH_P2WPKH
+        encoding = AddressEncodings.P2SH_P2WPKH;
       }
     } catch (e) {
       try {
@@ -90,7 +272,7 @@ class Provider extends BaseProvider {
           decoded.prefix === this.network.bech32 &&
           decoded.data.length === 20
         ) {
-          encoding = SupportedEncodings.p2wpkh;
+          encoding = AddressEncodings.P2WPKH;
         }
       } catch (e) {
         // ignored
@@ -189,9 +371,9 @@ class Provider extends BaseProvider {
     check(validation.isValid, 'Invalid Address');
 
     let signOptions: Record<string, unknown> | undefined = undefined;
-    if (validation.encoding === SupportedEncodings.p2wpkh) {
+    if (validation.encoding === AddressEncodings.P2WPKH) {
       signOptions = { segwitType: 'p2wpkh' };
-    } else if (validation.encoding === SupportedEncodings.p2sh$p2wpkh) {
+    } else if (validation.encoding === AddressEncodings.P2SH_P2WPKH) {
       signOptions = { segwitType: 'p2sh(p2wpkh)' };
     }
 
@@ -219,8 +401,8 @@ class Provider extends BaseProvider {
     check(validation.isValid, 'Invalid Address');
 
     const checkSegwitAlways =
-      validation.encoding === SupportedEncodings.p2wpkh ||
-      validation.encoding === SupportedEncodings.p2sh$p2wpkh;
+      validation.encoding === AddressEncodings.P2WPKH ||
+      validation.encoding === AddressEncodings.P2SH_P2WPKH;
 
     return bitcoinMessage.verify(
       message,
@@ -231,25 +413,25 @@ class Provider extends BaseProvider {
     );
   }
 
-  private async pubkeyToPayment(
+  private pubkeyToPayment(
     pubkey: Buffer,
-    encoding?: string,
-  ): Promise<BitcoinJS.Payment> {
+    encoding: AddressEncodings,
+  ): BitcoinJS.Payment {
     let payment: BitcoinJS.Payment = {
       pubkey: pubkey,
       network: this.network,
     };
 
     switch (encoding) {
-      case SupportedEncodings.p2pkh:
+      case AddressEncodings.P2PKH:
         payment = BitcoinJS.payments.p2pkh(payment);
         break;
 
-      case SupportedEncodings.p2wpkh:
+      case AddressEncodings.P2WPKH:
         payment = BitcoinJS.payments.p2wpkh(payment);
         break;
 
-      case SupportedEncodings.p2sh$p2wpkh:
+      case AddressEncodings.P2SH_P2WPKH:
         payment = BitcoinJS.payments.p2sh({
           redeem: BitcoinJS.payments.p2wpkh(payment),
           network: this.network,
@@ -305,13 +487,13 @@ class Provider extends BaseProvider {
       } = {};
 
       switch (encoding) {
-        case SupportedEncodings.p2pkh:
+        case AddressEncodings.P2PKH:
           mixin.nonWitnessUtxo = Buffer.from(nonWitnessPrevTxs[utxo.txid]);
           break;
-        case SupportedEncodings.p2wpkh:
+        case AddressEncodings.P2WPKH:
           mixin.witnessUtxo = {
             script: checkIsDefined(
-              await this.pubkeyToPayment(
+              this.pubkeyToPayment(
                 await signers[input.address].getPubkey(true),
                 encoding,
               ),
@@ -319,10 +501,10 @@ class Provider extends BaseProvider {
             value: utxo.value.integerValue().toNumber(),
           };
           break;
-        case SupportedEncodings.p2sh$p2wpkh:
+        case AddressEncodings.P2SH_P2WPKH:
           {
             const payment = checkIsDefined(
-              await this.pubkeyToPayment(
+              this.pubkeyToPayment(
                 await signers[input.address].getPubkey(true),
                 encoding,
               ),
@@ -380,7 +562,7 @@ class Provider extends BaseProvider {
       new Set(
         inputAddressesEncodings
           .map((encoding, index) => {
-            if (encoding === SupportedEncodings.p2pkh) {
+            if (encoding === AddressEncodings.P2PKH) {
               return checkIsDefined(inputs[index].utxo).txid;
             }
           })
@@ -568,4 +750,4 @@ const buildHardwareOutput = (output: TxOutput): TxOutputType => {
   };
 };
 
-export { Provider, SupportedEncodings };
+export { Provider };

@@ -10,7 +10,7 @@ import {
 } from '../../../types/provider';
 import { Signer, Verifier } from '../../../types/secret';
 import { Provider as BTCProvider } from '../btc';
-import { SupportedEncodings } from '../btc/provider';
+import AddressEncodings from '../btc/sdk/addressEncodings';
 
 class Provider extends BTCProvider {
   async pubkeyToAddress(
@@ -19,7 +19,7 @@ class Provider extends BTCProvider {
   ): Promise<string> {
     const legacyAddress = await super.pubkeyToAddress(
       verifier,
-      SupportedEncodings.p2pkh,
+      AddressEncodings.P2PKH,
     );
     return bchaddr.toCashAddress(legacyAddress);
   }
@@ -30,7 +30,7 @@ class Provider extends BTCProvider {
       ? {
           displayAddress: address,
           normalizedAddress: address,
-          encoding: SupportedEncodings.p2pkh,
+          encoding: AddressEncodings.P2PKH,
           isValid: true,
         }
       : { isValid: false };
@@ -68,8 +68,8 @@ class Provider extends BTCProvider {
     address = bchaddr.toLegacyAddress(address);
 
     const checkSegwitAlways =
-      validation.encoding === SupportedEncodings.p2wpkh ||
-      validation.encoding === SupportedEncodings.p2sh$p2wpkh;
+      validation.encoding === AddressEncodings.P2WPKH ||
+      validation.encoding === AddressEncodings.P2SH_P2WPKH;
 
     return bitcoinMessage.verify(
       message,

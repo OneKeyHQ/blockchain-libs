@@ -31,6 +31,12 @@ class BlockBook extends SimpleClient {
     };
   }
 
+  getAccount(xpub: string, params: Record<string, any>): Promise<any> {
+    return this.restful
+      .get(`/api/v2/xpub/${xpub}`, params)
+      .then((i) => i.json());
+  }
+
   async getAddress(address: string): Promise<AddressInfo> {
     const resp: any = await this.restful
       .get(`/api/v2/address/${address}`, {
