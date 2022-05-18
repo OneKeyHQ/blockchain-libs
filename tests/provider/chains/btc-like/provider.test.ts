@@ -1,5 +1,6 @@
 import { Provider as BCHProvider } from '../../../../src/provider/chains/bch';
 import { Provider as BTCProvider } from '../../../../src/provider/chains/btc';
+import AddressEncodings from '../../../../src/provider/chains/btc/sdk/addressEncodings';
 
 import fixture from './fixture.json';
 
@@ -24,7 +25,10 @@ describe('pubkeyToAddress', () => {
     for (const [encoding, correctAddress] of Object.entries(config)) {
       test(`${chainCode}:${encoding}`, async () => {
         await expect(
-          getProvider(chainCode).pubkeyToAddress(verifier, encoding),
+          getProvider(chainCode).pubkeyToAddress(
+            verifier,
+            encoding as AddressEncodings,
+          ),
         ).resolves.toBe(correctAddress);
       });
     }

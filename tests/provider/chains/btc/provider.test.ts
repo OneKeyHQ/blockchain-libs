@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 
 import { Provider } from '../../../../src/provider/chains/btc';
+import AddressEncodings from '../../../../src/provider/chains/btc/sdk/addressEncodings';
 import { UnsignedTx } from '../../../../src/types/provider';
 
 const chainInfo: any = {
@@ -24,19 +25,19 @@ test('pubkeyToAddress', async () => {
       ),
   };
 
-  await expect(provider.pubkeyToAddress(verifier, 'P2PKH')).resolves.toBe(
-    '1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH',
-  );
-  await expect(provider.pubkeyToAddress(verifier, 'P2WPKH')).resolves.toBe(
-    'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
-  );
-  await expect(provider.pubkeyToAddress(verifier, 'P2SH_P2WPKH')).resolves.toBe(
-    '3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN',
-  );
+  await expect(
+    provider.pubkeyToAddress(verifier, AddressEncodings.P2PKH),
+  ).resolves.toBe('1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH');
+  await expect(
+    provider.pubkeyToAddress(verifier, AddressEncodings.P2WPKH),
+  ).resolves.toBe('bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4');
+  await expect(
+    provider.pubkeyToAddress(verifier, AddressEncodings.P2SH_P2WPKH),
+  ).resolves.toBe('3JvL6Ymt8MVWiCNHC7oWU6nLeHNJKLZGLN');
 
-  await expect(provider.pubkeyToAddress(verifier, 'P2SH')).rejects.toThrow(
-    'Invalid encoding: P2SH',
-  );
+  await expect(
+    provider.pubkeyToAddress(verifier, 'invalid' as AddressEncodings),
+  ).rejects.toThrow('Invalid encoding: invalid');
 });
 
 test('verifyAddress', async () => {

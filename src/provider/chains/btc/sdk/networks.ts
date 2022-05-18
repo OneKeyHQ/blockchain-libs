@@ -1,5 +1,55 @@
 import * as BitcoinJS from 'bitcoinjs-lib';
 
+import AddressEncodings from './addressEncodings';
+
+interface Network extends BitcoinJS.Network {
+  // Extends the network interface to support:
+  //   - segwit address version bytes
+  segwitVersionBytes?: Record<AddressEncodings, BitcoinJS.Network['bip32']>;
+}
+
+const btc = {
+  ...BitcoinJS.networks.bitcoin,
+  segwitVersionBytes: {
+    [AddressEncodings.P2SH_P2WPKH]: {
+      public: 0x049d7cb2,
+      private: 0x049d7878,
+    },
+    [AddressEncodings.P2WPKH]: {
+      public: 0x04b24746,
+      private: 0x04b2430c,
+    },
+  },
+};
+
+const tbtc = {
+  ...BitcoinJS.networks.testnet,
+  segwitVersionBytes: {
+    [AddressEncodings.P2SH_P2WPKH]: {
+      public: 0x044a5262,
+      private: 0x044a4e28,
+    },
+    [AddressEncodings.P2WPKH]: {
+      public: 0x045f1cf6,
+      private: 0x045f18bc,
+    },
+  },
+};
+
+const rbtc = {
+  ...BitcoinJS.networks.regtest,
+  segwitVersionBytes: {
+    [AddressEncodings.P2SH_P2WPKH]: {
+      public: 0x044a5262,
+      private: 0x044a4e28,
+    },
+    [AddressEncodings.P2WPKH]: {
+      public: 0x045f1cf6,
+      private: 0x045f18bc,
+    },
+  },
+};
+
 const ltc = {
   messagePrefix: '\x19Litecoin Signed Message:\n',
   bech32: 'ltc',
@@ -97,6 +147,9 @@ const dash = {
 };
 
 const extendedNetworks: Record<string, BitcoinJS.Network> = {
+  btc,
+  tbtc,
+  rbtc,
   ltc,
   bch,
   doge,
@@ -107,22 +160,12 @@ const extendedNetworks: Record<string, BitcoinJS.Network> = {
   dash,
 };
 
-const getNetwork = (chainCode: string): BitcoinJS.Network => {
-  switch (chainCode) {
-    case 'btc':
-      return BitcoinJS.networks.bitcoin;
-    case 'tbtc':
-      return BitcoinJS.networks.testnet;
-    case 'rbtc':
-      return BitcoinJS.networks.regtest;
-    default: {
-      const network = extendedNetworks[chainCode];
-      if (!network) {
-        throw new Error(`Network not found. chainCode: ${chainCode}`);
-      }
-      return network;
-    }
+const getNetwork = (chainCode: string): Network => {
+  const network = extendedNetworks[chainCode];
+  if (typeof network === 'undefined') {
+    throw new Error(`Network not found. chainCode: ${chainCode}`);
   }
+  return network;
 };
 
-export { getNetwork };
+export { Network, getNetwork };
