@@ -121,12 +121,21 @@ class Tendermint extends SimpleClient {
     );
 
     const cw20Balances: Array<{ order: number; value: BigNumber | undefined }> =
-      await Promise.allSettled(
-        cw20Requests.map((req) => this.getCW20Balance(req.address, req.coin)),
+      await Promise.all(
+        cw20Requests.map((req) =>
+          this.getCW20Balance(req.address, req.coin).then(
+            (value) => value,
+            (reason) => {
+              console.debug('Error getting CW20 balances', reason);
+              return undefined;
+            },
+          ),
+        ),
       ).then((results) =>
-        results
-          .map((r) => (r.status === 'fulfilled' ? r.value : undefined))
-          .map((v, index) => ({ order: cw20Requests[index].order, value: v })),
+        results.map((v, index) => ({
+          order: cw20Requests[index].order,
+          value: v,
+        })),
       );
 
     const compressedNativeTokenRequests: [string, OrderedRequest[]][] =
@@ -145,33 +154,37 @@ class Tendermint extends SimpleClient {
     const nativeTokenBalances: Array<{
       order: number;
       value: BigNumber | undefined;
-    }> = await Promise.allSettled(
+    }> = await Promise.all(
       compressedNativeTokenRequests.map(([address, reqs]) =>
         this.getNativeTokenBalances(
           address,
           reqs.map((r) => r.coin),
+        ).then(
+          (value) => value,
+          (reason) => {
+            console.debug('Error getting native token balances', reason);
+            return [];
+          },
         ),
       ),
     ).then((results) =>
-      results
-        .map((r) => (r.status === 'fulfilled' ? r.value : undefined))
-        .reduce<
-          Array<{
-            order: number;
-            value: BigNumber | undefined;
-          }>
-        >((acc, cur, index) => {
-          const [address, reqs] = compressedNativeTokenRequests[index];
-          cur = cur || Array(reqs.length).fill(undefined);
-          acc.push(
-            ...cur.map((v, subIndex) => ({
-              value: v,
-              order: reqs[subIndex].order,
-            })),
-          );
+      results.reduce<
+        Array<{
+          order: number;
+          value: BigNumber | undefined;
+        }>
+      >((acc, cur, index) => {
+        const [address, reqs] = compressedNativeTokenRequests[index];
+        cur = cur || Array(reqs.length).fill(undefined);
+        acc.push(
+          ...cur.map((v, subIndex) => ({
+            value: v,
+            order: reqs[subIndex].order,
+          })),
+        );
 
-          return acc;
-        }, []),
+        return acc;
+      }, []),
     );
 
     return [...cw20Balances, ...nativeTokenBalances]
