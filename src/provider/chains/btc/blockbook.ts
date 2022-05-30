@@ -54,37 +54,35 @@ class BlockBook extends SimpleClient {
   async estimateFee(waitingBlock: number): Promise<number> {
     const resp = await this.restful
       .get(`/api/v2/estimatefee/${waitingBlock}`)
-      .then((i) => i.json());
+      .then((i) => i.json())
+      .catch((reason) => {
+        console.debug('Error when estimating fee', reason);
+        return { result: '0' };
+      });
 
-    return Math.max(
-      MIN_SAT_PER_BYTE,
-      (Number(resp.result || 0) * BTC_PER_KBYTES__TO__SAT_PER_BYTE) as never,
-    );
+    return Number(resp.result || 0) * BTC_PER_KBYTES__TO__SAT_PER_BYTE;
   }
 
   async getFeePricePerUnit(): Promise<FeePricePerUnit> {
-    const [normalResp, fastResp, slowResp] = await Promise.allSettled([
+    const [normalResp, fastResp, slowResp] = await Promise.all([
       this.estimateFee(5),
       this.estimateFee(1),
       this.estimateFee(20),
     ]);
 
-    const isFulfilledFee = (resp?: PromiseSettledResult<number>) =>
-      resp &&
-      resp.status === 'fulfilled' &&
-      Number.isFinite(resp.value) &&
-      resp.value > 0;
+    const isFulfilledFee = (fee: number) =>
+      Number.isFinite(fee) && fee >= MIN_SAT_PER_BYTE;
 
     const normal: number = isFulfilledFee(normalResp)
-      ? (normalResp as PromiseFulfilledResult<number>).value
+      ? normalResp
       : MIN_SAT_PER_BYTE;
 
     const fast = isFulfilledFee(fastResp)
-      ? (fastResp as PromiseFulfilledResult<number>).value
+      ? fastResp
       : Math.max(MIN_SAT_PER_BYTE, normal * 1.6);
 
     const slow = isFulfilledFee(slowResp)
-      ? (slowResp as PromiseFulfilledResult<number>).value
+      ? slowResp
       : Math.max(MIN_SAT_PER_BYTE, normal * 0.6);
 
     return {

@@ -446,16 +446,12 @@ class Provider extends BaseProvider {
   }
 
   private parseAddressEncodings(addresses: string[]): Promise<string[]> {
-    return Promise.allSettled(
+    return Promise.all(
       addresses.map((address) => this.verifyAddress(address)),
-    ).then(
-      (results) =>
-        results
-          .filter((i) => i.status === 'fulfilled' && i.value.isValid)
-          .map(
-            (i) =>
-              (i as PromiseFulfilledResult<AddressValidation>).value.encoding,
-          ) as string[],
+    ).then((results) =>
+      results
+        .filter((i) => i.isValid)
+        .map((i) => (i as { encoding: string }).encoding),
     );
   }
 

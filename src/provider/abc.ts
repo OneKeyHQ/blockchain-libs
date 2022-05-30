@@ -2,7 +2,6 @@ import { Success, Unsuccessful } from '@onekeyfe/js-sdk';
 import BigNumber from 'bignumber.js';
 
 import { HardwareError, NotImplementedError } from '../basic/exceptions';
-import { check } from '../basic/precondtion';
 import { ChainInfo, CoinInfo } from '../types/chain';
 import {
   AddressInfo,
@@ -59,25 +58,24 @@ abstract class SimpleClient extends BaseClient {
     inputs: T[],
     handler: (input: T) => Promise<R | undefined>,
   ): Promise<Array<R | undefined>> {
-    const outputs = await Promise.allSettled(inputs.map(handler));
-    check(
-      inputs.length === outputs.length,
-      `Batch call ${inputs.length} requests, but received ${outputs.length} results`,
+    const ret = await Promise.all(
+      inputs.map((input) =>
+        handler(input).then(
+          (value) => value,
+          (reason) => {
+            console.debug(
+              `Error in Calling ${handler.name}. `,
+              ' input: ',
+              input,
+              ', reason',
+              reason,
+            );
+            return undefined;
+          },
+        ),
+      ),
     );
-
-    return outputs.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return result.value;
-      } else {
-        console.debug(
-          `Error in Calling ${handler.name}. `,
-          ' input: ',
-          inputs[index],
-          ', reason',
-          result.reason,
-        );
-      }
-    });
+    return ret;
   }
 
   async getAddresses(

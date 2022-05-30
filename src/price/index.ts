@@ -125,7 +125,7 @@ class PriceController {
       }
     }
 
-    const results = Promise.allSettled(
+    const results = Promise.all(
       Object.entries(cache)
         .map(
           ([pair, values]) =>
@@ -136,7 +136,10 @@ class PriceController {
         )
         .filter(([_, value]) => value.isFinite() && value.gt(0))
         .map(([pair, value]) =>
-          this.storage.set(`PRICE-${pair}`, value.toString()),
+          this.storage.set(`PRICE-${pair}`, value.toString()).then(
+            (value) => ({ status: 'fulfilled', value }),
+            (reason) => ({ status: 'rejected', reason }),
+          ),
         ),
     );
 
