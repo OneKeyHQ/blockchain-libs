@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -50,7 +50,7 @@
     "@metamask/eth-sig-util": "^4.0.0",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.29.2",
-    "@starcoin/starcoin": "^1.6.2",
+    "@starcoin/starcoin": "^2.1.5",
     "algo-msgpack-with-bigint": "^2.1.1",
     "asmcrypto.js": "^2.3.2",
     "bchaddrjs": "^0.5.2",
