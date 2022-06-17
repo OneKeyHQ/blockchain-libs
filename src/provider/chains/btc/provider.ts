@@ -570,7 +570,7 @@ class Provider extends BaseProvider {
     return [inputAddressesEncodings, nonWitnessPrevTxs];
   }
 
-  private async collectTxs(txids: string[]): Promise<Record<string, string>> {
+  async collectTxs(txids: string[]): Promise<Record<string, string>> {
     const blockbook = await this.blockbook;
     const lookup: Record<string, string> = {};
 
