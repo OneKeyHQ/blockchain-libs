@@ -307,7 +307,7 @@ class Provider extends BaseProvider {
   }
 }
 
-const buildUnsignedRawTx = (
+export const buildUnsignedRawTx = (
   unsignedTx: UnsignedTx,
   chainId: string,
 ): [starcoin_types.RawUserTransaction, Uint8Array] => {
@@ -348,7 +348,7 @@ const hashRawTx = (rawUserTransactionBytes: Uint8Array): Uint8Array => {
   return Uint8Array.of(...hashSeedBytes, ...rawUserTransactionBytes);
 };
 
-const buildSignedTx = (
+export const buildSignedTx = (
   senderPublicKey: string,
   rawSignature: Buffer,
   rawTxn: starcoin_types.RawUserTransaction,
