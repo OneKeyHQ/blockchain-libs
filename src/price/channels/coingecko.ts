@@ -26,39 +26,27 @@ class Coingecko implements PriceChannel {
     'aud',
     'inr',
   ]);
-  readonly restfuls: Array<RestfulRequest>;
-  private lastIndex = 0;
+  readonly restfulReq: RestfulRequest;
 
   constructor() {
-    this.restfuls = [
-      new RestfulRequest('https://cdn.trezor.io/dynamic/coingecko'),
-      new RestfulRequest('https://api.coingecko.com'),
-    ];
+    this.restfulReq = new RestfulRequest('https://fiat.onekey.so');
   }
 
   async fetchApi(
     path: string,
     params?: Record<string, any>,
   ): Promise<Response> {
-    const errors = [];
-
-    for (let i = 0, count = this.restfuls.length; i < count; ++i) {
-      try {
-        const index = (this.lastIndex + i) % count;
-        const restful = this.restfuls[index];
-        const result = await restful.get(path, params);
-        this.lastIndex = index;
-        return result;
-      } catch (e) {
-        errors.push(e);
-      }
+    let realPath = path;
+    if (path === '/api/v3/coins/markets') {
+      realPath = '/market/list';
+    } else if (path.startsWith('/api/v3/')) {
+      realPath = path.substring(8);
     }
-
-    throw errors;
+    return this.restfulReq.get(realPath, params);
   }
 
   async fetchBTCPrices(): Promise<Array<Price>> {
-    const resp: any = await this.fetchApi('/api/v3/exchange_rates').then((i) =>
+    const resp: any = await this.fetchApi('/exchange_rates').then((i) =>
       i.json(),
     );
     const rates = resp?.rates || {};
@@ -81,7 +69,7 @@ class Coingecko implements PriceChannel {
     unit = 'btc',
   ): Promise<Array<Price>> {
     const resp: Array<any> =
-      (await this.fetchApi('/api/v3/coins/markets', {
+      (await this.fetchApi('/market/list', {
         ids: Object.keys(cgkIds).join(','),
         vs_currency: unit,
       }).then((i) => i.json())) || [];
@@ -108,7 +96,7 @@ class Coingecko implements PriceChannel {
 
     for (const tokenAddresses of chunked(Object.keys(tokenAddress2Code), 100)) {
       const resp =
-        (await this.fetchApi('/api/v3/simple/token_price/ethereum', {
+        (await this.fetchApi('/simple/token_price/ethereum', {
           contract_addresses: tokenAddresses.join(','),
           vs_currencies: unit,
         }).then((i) => i.json())) || {};
