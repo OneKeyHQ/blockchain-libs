@@ -39,10 +39,10 @@ class Provider extends BaseProvider {
     let checksumAddress = '';
 
     try {
-      checksumAddress = address.startsWith('0x') ? getAddress(address) : '';
+      checksumAddress = getAddress(address);
       isValid = checksumAddress.length === 42;
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // pass
     }
 
     return Promise.resolve({
