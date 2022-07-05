@@ -311,6 +311,7 @@ class Provider extends BaseProvider {
           gasPrice: tx.gasPrice,
           gasLimit: tx.gasLimit,
           nonce: ethUtil.addHexPrefix(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ethUtil.padToEven(tx.nonce!.toString(16)),
           ),
           data: tx.data,

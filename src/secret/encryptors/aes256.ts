@@ -5,9 +5,10 @@ import { AES_CBC, Pbkdf2HmacSha256 } from 'asmcrypto.js';
 import { IncorrectPassword } from '../../basic/exceptions';
 import { sha256 } from '../hash';
 
-const ALGORITHM = 'aes-256-cbc';
+// Below codes are comments to note algorithm and digest method used.
+// const ALGORITHM = 'aes-256-cbc';
+// const PBKDF2_DIGEST_METHOD = 'sha256';
 const PBKDF2_NUM_OF_ITERATIONS = 5000;
-const PBKDF2_DIGEST_METHOD = 'sha256';
 const PBKDF2_KEY_LENGTH = 32;
 const PBKDF2_SALT_LENGTH = 32;
 const AES256_IV_LENGTH = 16;

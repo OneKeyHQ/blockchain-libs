@@ -138,7 +138,6 @@ export function fastMakeSignDoc(
   });
 
   const encodePub = encodePubkey(pubkey);
-  const encodePub2 = {};
   const authBytes = makeAuthInfoBytes(
     [{ pubkey: encodePub, sequence: nonce }],
     [

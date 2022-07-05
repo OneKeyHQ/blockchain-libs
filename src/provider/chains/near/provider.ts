@@ -21,7 +21,7 @@ const REGISTER_ACCOUNT_PATTERN =
   /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
 
 const packActions = (unsignedTx: UnsignedTx) => {
-  const { inputs, outputs } = unsignedTx;
+  const { outputs } = unsignedTx;
   const [output] = outputs;
   const actions = [];
 
@@ -171,6 +171,7 @@ class Provider extends BaseProvider {
       input.address,
       PublicKey.from(new Uint8Array(pubkey)),
       output.tokenAddress || output.address,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       nonce!,
       actions,
       baseDecode(blockHash),
