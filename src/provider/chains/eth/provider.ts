@@ -39,10 +39,10 @@ class Provider extends BaseProvider {
     let checksumAddress = '';
 
     try {
-      checksumAddress = address.startsWith('0x') ? getAddress(address) : '';
+      checksumAddress = getAddress(address);
       isValid = checksumAddress.length === 42;
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // pass
     }
 
     return Promise.resolve({
@@ -65,8 +65,10 @@ class Provider extends BaseProvider {
     const output = unsignedTx.outputs[0];
 
     const payload = unsignedTx.payload || {};
-    let nonce = unsignedTx.nonce;
+    const nonce = unsignedTx.nonce;
     let feeLimit = unsignedTx.feeLimit;
+
+    check(typeof nonce === 'number' && nonce >= 0, 'nonce is required');
 
     if (input && output) {
       const fromAddress = input.address;
@@ -105,13 +107,6 @@ class Provider extends BaseProvider {
             (await this.geth.then((client) => client.isContract(toAddress))))
             ? estimatedGasLimitBN.multipliedBy(multiplier).integerValue()
             : estimatedGasLimitBN;
-      }
-
-      if (typeof nonce !== 'number' || nonce < 0) {
-        const [addressInfo] = await this.geth.then((client) =>
-          client.getAddresses([fromAddress]),
-        );
-        nonce = addressInfo?.nonce;
       }
     }
 
@@ -316,6 +311,7 @@ class Provider extends BaseProvider {
           gasPrice: tx.gasPrice,
           gasLimit: tx.gasLimit,
           nonce: ethUtil.addHexPrefix(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             ethUtil.padToEven(tx.nonce!.toString(16)),
           ),
           data: tx.data,

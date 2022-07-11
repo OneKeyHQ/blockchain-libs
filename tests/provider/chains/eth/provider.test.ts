@@ -89,11 +89,16 @@ test('buildUnsignedTx with placeholder tx', async () => {
   );
 
   await expect(
-    provider.buildUnsignedTx({ inputs: [], outputs: [], payload: {} }),
+    provider.buildUnsignedTx({
+      inputs: [],
+      outputs: [],
+      nonce: 1,
+      payload: {},
+    }),
   ).resolves.toStrictEqual({
     inputs: [],
     outputs: [],
-    nonce: undefined,
+    nonce: 1,
     feeLimit: new BigNumber(21000),
     feePricePerUnit: new BigNumber(30000000000),
     payload: {},
@@ -111,7 +116,6 @@ test('buildUnsignedTx after filling in basic information', async () => {
   );
   geth.estimateGasLimit.mockResolvedValueOnce('0x5208');
   geth.isContract.mockResolvedValueOnce(false);
-  geth.getAddresses.mockResolvedValueOnce([{ nonce: 11 }]);
 
   await expect(
     provider.buildUnsignedTx({
@@ -127,6 +131,7 @@ test('buildUnsignedTx after filling in basic information', async () => {
           value: new BigNumber(21),
         },
       ],
+      nonce: 11,
       payload: {},
     }),
   ).resolves.toStrictEqual({
@@ -154,9 +159,6 @@ test('buildUnsignedTx after filling in basic information', async () => {
     '0x15',
     undefined,
   );
-  expect(geth.getAddresses).toHaveBeenCalledWith([
-    '0x71df3bb810127271d400f7be99cc1f4504ab4c1a',
-  ]);
   expect(geth.isContract).toHaveBeenCalledWith(
     '0xa305fab8bda7e1638235b054889b3217441dd645',
   );
@@ -168,7 +170,6 @@ test('buildUnsignedTx with contract', async () => {
   );
   geth.estimateGasLimit.mockResolvedValueOnce('0x30d40');
   geth.isContract.mockResolvedValueOnce(true);
-  geth.getAddresses.mockResolvedValueOnce([{ nonce: 11 }]);
 
   await expect(
     provider.buildUnsignedTx({
@@ -184,6 +185,7 @@ test('buildUnsignedTx with contract', async () => {
           value: new BigNumber(21),
         },
       ],
+      nonce: 11,
       payload: { data: '0x0102030405' },
     }),
   ).resolves.toStrictEqual({
@@ -213,9 +215,6 @@ test('buildUnsignedTx with contract', async () => {
     '0x15',
     '0x0102030405',
   );
-  expect(geth.getAddresses).toHaveBeenCalledWith([
-    '0x71df3bb810127271d400f7be99cc1f4504ab4c1a',
-  ]);
   expect(geth.isContract).toHaveBeenCalledWith(
     '0xa305fab8bda7e1638235b054889b3217441dd645',
   );
@@ -227,7 +226,6 @@ test('buildUnsignedTx with ERC20', async () => {
   );
   geth.estimateGasLimit.mockResolvedValueOnce('0x30d40');
   geth.isContract.mockResolvedValueOnce(true);
-  geth.getAddresses.mockResolvedValueOnce([{ nonce: 11 }]);
 
   await expect(
     provider.buildUnsignedTx({
@@ -245,6 +243,7 @@ test('buildUnsignedTx with ERC20', async () => {
           tokenAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
         },
       ],
+      nonce: 11,
       payload: { data: '0x0102030405' },
     }),
   ).resolves.toStrictEqual({
@@ -276,9 +275,6 @@ test('buildUnsignedTx with ERC20', async () => {
     '0x0',
     '0xa9059cbb000000000000000000000000a305fab8bda7e1638235b054889b3217441dd6450000000000000000000000000000000000000000000000000000000000000015',
   );
-  expect(geth.getAddresses).toHaveBeenCalledWith([
-    '0x71df3bb810127271d400f7be99cc1f4504ab4c1a',
-  ]);
   expect(geth.isContract).not.toBeCalled();
 });
 

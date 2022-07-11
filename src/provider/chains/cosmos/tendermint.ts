@@ -174,7 +174,7 @@ class Tendermint extends SimpleClient {
           value: BigNumber | undefined;
         }>
       >((acc, cur, index) => {
-        const [address, reqs] = compressedNativeTokenRequests[index];
+        const [_address, reqs] = compressedNativeTokenRequests[index];
         cur = cur || Array(reqs.length).fill(undefined);
         acc.push(
           ...cur.map((v, subIndex) => ({
@@ -216,6 +216,7 @@ class Tendermint extends SimpleClient {
   }
 
   async getCW20Balance(address: string, coin: Partial<CoinInfo>) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const result: any = await this.queryContract(coin.tokenAddress!, {
       balance: { address },
     });
