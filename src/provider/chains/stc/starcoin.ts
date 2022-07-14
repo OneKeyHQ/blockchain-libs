@@ -140,8 +140,14 @@ class StcClient extends BaseClient {
     return await this.rpc.call('txpool.submit_hex_transaction', [rawTx]);
   }
 
-  async estimateGasLimit(params: { [key: string]: any }): Promise<BigNumber> {
-    const resp: any = await this.rpc.call('contract.dry_run', [params]);
+  async estimateGasLimit(
+    rawUserTransactionHex: string,
+    senderPublicKeyHex: string,
+  ): Promise<BigNumber> {
+    const resp: any = await this.rpc.call('contract.dry_run_raw', [
+      rawUserTransactionHex,
+      senderPublicKeyHex,
+    ]);
     if (resp?.status === 'Executed') {
       return new BigNumber(parseInt(resp.gas_used));
     } else {

@@ -1,4 +1,4 @@
-import { arrayify, hexlify } from '@ethersproject/bytes';
+import { hexlify } from '@ethersproject/bytes';
 import OneKeyConnect from '@onekeyfe/js-sdk';
 import {
   bcs,
@@ -35,7 +35,7 @@ class Provider extends BaseProvider {
     let nonce = unsignedTx.nonce;
     let feeLimit = unsignedTx.feeLimit;
     if (txInput && txOutput) {
-      const senderPublicKey = txInput.publicKey;
+      const senderPublicKey = txInput.publicKey || '';
       if (!feeLimit) {
         check(senderPublicKey, 'senderPublicKey is required');
       }
@@ -56,37 +56,39 @@ class Provider extends BaseProvider {
       }
       payload.expirationTime =
         payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
-      const strTypeArgs = [tokenAddress ?? '0x1::STC::STC'];
-      const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
+      const typeArgs = [tokenAddress ?? '0x1::STC::STC'];
       const functionId = '0x1::TransferScripts::peer_to_peer_v2';
-      const amountSCSHex = (function () {
-        const se = new bcs.BcsSerializer();
-        se.serializeU128(BigInt(amount.toNumber()));
-        return hexlify(se.getBytes());
-      })();
-      const args = [arrayify(toAddr), arrayify(amountSCSHex)];
-      payload.scriptFn = utils.tx.encodeScriptFunction(
+      const args = [toAddr, BigInt(amount.toNumber())];
+      const nodeUrl = (await this.starcoin).rpc.url;
+      const scriptFunction = await utils.tx.encodeScriptFunctionByResolve(
         functionId,
-        tyArgs,
+        typeArgs,
         args,
+        nodeUrl,
       );
+      const maxGasAmount = 1000000;
+      const chainId = this.chainInfo.implOptions.chainId;
+      const gasUnitPrice = feePricePerUnit.toNumber();
+      const expirationTimestampSecs =
+        payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
+      const rawUserTransaction = utils.tx.generateRawUserTransaction(
+        fromAddr,
+        scriptFunction,
+        maxGasAmount,
+        gasUnitPrice,
+        nonce as number | BigInt,
+        expirationTimestampSecs,
+        chainId,
+      );
+
+      const rawUserTransactionHex = stcEncoding.bcsEncode(rawUserTransaction);
+      payload.scriptFn = scriptFunction;
+
       feeLimit =
         feeLimit ||
         (await (
           await this.starcoin
-        ).estimateGasLimit({
-          chain_id: this.chainInfo.implOptions.chainId,
-          gas_unit_price: feePricePerUnit.toNumber(),
-          sender: fromAddr,
-          sender_public_key: senderPublicKey,
-          sequence_number: nonce,
-          max_gas_amount: 1000000,
-          script: {
-            code: functionId,
-            type_args: strTypeArgs,
-            args: [toAddr, '19950u128'],
-          },
-        }));
+        ).estimateGasLimit(rawUserTransactionHex, senderPublicKey));
     }
     return {
       inputs: txInput ? [txInput] : [],
