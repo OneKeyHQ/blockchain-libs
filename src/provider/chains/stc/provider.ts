@@ -68,7 +68,8 @@ class Provider extends BaseProvider {
       );
       const maxGasAmount = 1000000;
       const chainId = this.chainInfo.implOptions.chainId;
-      const gasUnitPrice = feePricePerUnit.toNumber();
+      const gasUnitPrice =
+        feePricePerUnit.toNumber() < 1 ? 1 : feePricePerUnit.toNumber();
       const expirationTimestampSecs =
         payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
       const rawUserTransaction = utils.tx.generateRawUserTransaction(
@@ -333,7 +334,7 @@ export const buildUnsignedRawTx = (
     fromAddr,
     scriptFn,
     gasLimit.toNumber(),
-    gasPrice.toNumber(),
+    gasPrice.toNumber() < 1 ? 1 : gasPrice.toNumber(),
     nonce,
     expirationTime,
     Number(chainId),
