@@ -1,4 +1,4 @@
-import { hexlify } from '@ethersproject/bytes';
+import { arrayify, hexlify } from '@ethersproject/bytes';
 import OneKeyConnect from '@onekeyfe/js-sdk';
 import {
   bcs,
@@ -188,15 +188,31 @@ class Provider extends BaseProvider {
   }
 
   async signMessage(
-    { message }: TypedMessage,
+    { type, message: messageHex }: TypedMessage,
     signer: Signer,
     address?: string,
   ): Promise<string> {
     const privateKey = await signer.getPrvkey();
-    const { signature } = await utils.signedMessage.signMessage(
-      message,
+    const originMessage = Buffer.from(
+      ethUtil.stripHexPrefix(messageHex),
+      'hex',
+    ).toString('utf8');
+    const { publicKey, signature } = await utils.signedMessage.signMessage(
+      originMessage,
       privateKey.toString('hex'),
     );
+    if (type === 1) {
+      const chainId = parseInt(this.chainInfo.implOptions.chainId);
+      const msgBytes = arrayify(messageHex);
+      const signingMessage = new starcoin_types.SigningMessage(msgBytes);
+      const signedMessageHex = await utils.signedMessage.generateSignedMessage(
+        signingMessage,
+        chainId,
+        publicKey,
+        signature,
+      );
+      return signedMessageHex;
+    }
     return signature;
   }
 
