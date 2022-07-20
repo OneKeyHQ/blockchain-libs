@@ -13,7 +13,7 @@ import { BaseClient } from '../../abc';
 
 type estimateResult = {
   feeLimit: BigNumber;
-  tokensChangedTo: Record<string, BigNumber>;
+  tokensChangedTo: Record<string, string>;
 };
 
 const DEFAULT_GAS_LIMIT = 127845;
@@ -156,7 +156,7 @@ class StcClient extends BaseClient {
       senderPublicKeyHex,
     ]);
     let feeLimit: BigNumber;
-    let tokensChangedTo: Record<string, BigNumber>;
+    let tokensChangedTo: Record<string, string>;
 
     if (resp?.status === 'Executed') {
       feeLimit = new BigNumber(parseInt(resp.gas_used));
@@ -171,16 +171,16 @@ class StcClient extends BaseClient {
   getTokensChangedTo(
     dryRunRawResult: any,
     addressHex: string,
-  ): Record<string, BigNumber> {
+  ): Record<string, string> {
     const matches = dryRunRawResult.write_set.reduce(
-      (acc: Record<string, BigNumber>, item: any) => {
+      (acc: Record<string, string>, item: any) => {
         const reg =
           /^(0x[a-zA-Z0-9]{32})\/[01]\/0x00000000000000000000000000000001::Account::Balance<(.*)>$/i;
         const result = item.access_path.match(reg);
         if (result && result.length === 3 && addressHex === result[1]) {
           acc[result[2]] = new BigNumber(
             item.value.Resource.json.token.value ?? 0,
-          );
+          ).toFixed();
         }
         return acc;
       },

@@ -90,7 +90,7 @@ type UnsignedTx = {
   feeLimit?: BigNumber;
   feePricePerUnit?: BigNumber;
   payload: { [key: string]: any };
-  tokensChangedTo?: { [key: string]: BigNumber };
+  tokensChangedTo?: { [key: string]: string };
 };
 
 type SignedTx = {
