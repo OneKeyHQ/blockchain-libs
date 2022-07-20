@@ -1,3 +1,4 @@
+import { encoding } from '@starcoin/starcoin';
 import BigNumber from 'bignumber.js';
 
 import { JsonRPCRequest } from '../../../basic/request/json-rpc';
@@ -9,6 +10,11 @@ import {
   TransactionStatus,
 } from '../../../types/provider';
 import { BaseClient } from '../../abc';
+
+type estimateResult = {
+  feeLimit: BigNumber;
+  tokensChangedTo: Record<string, BigNumber>;
+};
 
 const DEFAULT_GAS_LIMIT = 127845;
 class StcClient extends BaseClient {
@@ -140,19 +146,47 @@ class StcClient extends BaseClient {
     return await this.rpc.call('txpool.submit_hex_transaction', [rawTx]);
   }
 
-  async estimateGasLimit(
+  async estimateGasLimitAndTokensChangedTo(
     rawUserTransactionHex: string,
     senderPublicKeyHex: string,
-  ): Promise<BigNumber> {
+  ): Promise<estimateResult> {
+    const addressHex = encoding.publicKeyToAddress(senderPublicKeyHex);
     const resp: any = await this.rpc.call('contract.dry_run_raw', [
       rawUserTransactionHex,
       senderPublicKeyHex,
     ]);
+    let feeLimit: BigNumber;
+    let tokensChangedTo: Record<string, BigNumber>;
+
     if (resp?.status === 'Executed') {
-      return new BigNumber(parseInt(resp.gas_used));
+      feeLimit = new BigNumber(parseInt(resp.gas_used));
+      tokensChangedTo = this.getTokensChangedTo(resp, addressHex);
     } else {
-      return new BigNumber(DEFAULT_GAS_LIMIT);
+      feeLimit = new BigNumber(DEFAULT_GAS_LIMIT);
+      tokensChangedTo = {};
     }
+    return { feeLimit, tokensChangedTo };
+  }
+
+  getTokensChangedTo(
+    dryRunRawResult: any,
+    addressHex: string,
+  ): Record<string, BigNumber> {
+    const matches = dryRunRawResult.write_set.reduce(
+      (acc: Record<string, BigNumber>, item: any) => {
+        const reg =
+          /^(0x[a-zA-Z0-9]{32})\/[01]\/0x00000000000000000000000000000001::Account::Balance<(.*)>$/i;
+        const result = item.access_path.match(reg);
+        if (result && result.length === 3 && addressHex === result[1]) {
+          acc[result[2]] = new BigNumber(
+            item.value.Resource.json.token.value ?? 0,
+          );
+        }
+        return acc;
+      },
+      {},
+    );
+    return matches;
   }
 }
 export { StcClient };

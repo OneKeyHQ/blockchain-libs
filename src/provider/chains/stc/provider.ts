@@ -97,16 +97,23 @@ class Provider extends BaseProvider {
 
     const rawUserTransactionHex = stcEncoding.bcsEncode(rawUserTransaction);
 
-    feeLimit =
-      feeLimit ||
-      (await (
-        await this.starcoin
-      ).estimateGasLimit(rawUserTransactionHex, senderPublicKey));
+    let tokensChangedTo;
 
+    if (!feeLimit) {
+      const result = await (
+        await this.starcoin
+      ).estimateGasLimitAndTokensChangedTo(
+        rawUserTransactionHex,
+        senderPublicKey,
+      );
+      feeLimit = result.feeLimit;
+      tokensChangedTo = result.tokensChangedTo;
+    }
     return {
       inputs: txInput ? [txInput] : [],
       outputs: txOutput ? [txOutput] : [],
       feeLimit,
+      tokensChangedTo,
       feePricePerUnit,
       nonce,
       payload,
