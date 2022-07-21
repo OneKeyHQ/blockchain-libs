@@ -33,7 +33,7 @@ class Provider extends BaseProvider {
     const txOutput = unsignedTx.outputs[0];
     const payload = unsignedTx.payload || {};
 
-    let nonce = unsignedTx.nonce;
+    const nonce = unsignedTx.nonce;
     let feeLimit = unsignedTx.feeLimit;
     const fromAddr = txInput.address;
     let txPayload: starcoin_types.TransactionPayload;
@@ -73,8 +73,7 @@ class Provider extends BaseProvider {
       check(senderPublicKey, 'senderPublicKey is required');
     }
     if (typeof nonce === 'undefined') {
-      nonce = (await (await this.starcoin).getAddresses([fromAddr]))[0]?.nonce;
-      check(typeof nonce !== 'undefined', 'nonce is not available');
+      throw new Error('nonce is not available');
     }
     payload.expirationTime =
       payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
