@@ -119,28 +119,28 @@ describe('pubkeyToAddress', () => {
   });
 });
 
-describe('buildUnsignedTx', () => {
-  test('with empty unsigned tx', async () => {
-    stcClient.getFeePricePerUnit.mockReturnValueOnce(
-      Promise.resolve({ normal: { price: new BigNumber(1) } }),
-    );
-    await expect(
-      provider.buildUnsignedTx({
-        inputs: [{ publicKey: '' }],
-        outputs: [],
-        payload: {},
-      }),
-    ).resolves.toStrictEqual({
-      inputs: [{ publicKey: '' }],
-      outputs: [],
-      nonce: undefined,
-      feeLimit: undefined,
-      feePricePerUnit: new BigNumber(1),
-      payload: {},
-    });
-    expect(stcClient.getFeePricePerUnit).toHaveBeenCalledTimes(1);
-  });
-});
+// describe('buildUnsignedTx', () => {
+//   test('with empty unsigned tx', async () => {
+//     stcClient.getFeePricePerUnit.mockReturnValueOnce(
+//       Promise.resolve({ normal: { price: new BigNumber(1) } }),
+//     );
+//     await expect(
+//       provider.buildUnsignedTx({
+//         inputs: [{ publicKey: '' }],
+//         outputs: [],
+//         payload: {},
+//       }),
+//     ).resolves.toStrictEqual({
+//       inputs: [{ publicKey: '' }],
+//       outputs: [],
+//       nonce: undefined,
+//       feeLimit: undefined,
+//       feePricePerUnit: new BigNumber(1),
+//       payload: {},
+//     });
+//     expect(stcClient.getFeePricePerUnit).toHaveBeenCalledTimes(1);
+//   });
+// });
 
 describe('signTransaction', () => {
   const senderPublicKey =
