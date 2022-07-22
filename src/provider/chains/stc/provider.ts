@@ -50,7 +50,7 @@ class Provider extends BaseProvider {
       const typeArgs = [tokenAddress ?? '0x1::STC::STC'];
       const functionId = '0x1::TransferScripts::peer_to_peer_v2';
       const args = [toAddr, BigInt(amount.toNumber())];
-      const nodeUrl = (await this.starcoin).rpc.url;
+      const nodeUrl = (await this.starcoin).rpc?.url;
       const scriptFunction = (await utils.tx.encodeScriptFunctionByResolve(
         functionId,
         typeArgs,
