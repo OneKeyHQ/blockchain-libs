@@ -295,7 +295,7 @@ test('estimateGasLimitAndTokensChangedTo', async () => {
     rawUserTransactionHex,
     senderPublicKey,
   ]);
-}, 10000);
+}, 50000);
 test('broadcastTransaction', async () => {
   mockedRPC.call.mockReturnValueOnce(
     Promise.resolve(
