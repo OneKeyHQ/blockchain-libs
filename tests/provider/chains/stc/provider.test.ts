@@ -1,4 +1,3 @@
-
 import { StcClient } from '../../../../src/provider/chains/stc';
 
 jest.mock('../../../../src/provider/chains/stc');
