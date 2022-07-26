@@ -1,3 +1,4 @@
+import { encoding, starcoin_types, utils } from '@starcoin/starcoin';
 import BigNumber from 'bignumber.js';
 
 import { JsonRPCRequest } from '../../../../src/basic/request/json-rpc';
@@ -224,31 +225,77 @@ test('getFeePricePerUnit', async () => {
 
   expect(mockedRPC.call).toHaveBeenCalledWith('txpool.gas_price', []);
 });
-test('estimateGasLimit', async () => {
+test('estimateGasLimitAndTokensChangedTo', async () => {
   // TODO: this rpc interface is not available in example
   mockedRPC.call.mockReturnValueOnce(
-    Promise.resolve({ status: 'Executed', gas_used: '4096' }),
+    Promise.resolve({
+      status: 'Executed',
+      gas_used: '4096',
+      write_set: [
+        {
+          access_path:
+            '0x7014a4259a73a328818e9eb8a926ca97/1/0x00000000000000000000000000000001::Account::Balance<0x00000000000000000000000000000001::STC::STC>',
+          action: 'Value',
+          value: {
+            Resource: {
+              json: {
+                token: {
+                  value: 548225404,
+                },
+              },
+              raw: '0x7c41ad20000000000000000000000000',
+            },
+          },
+        },
+      ],
+    }),
   );
-  const params = {
-    chain_id: 251,
-    gas_unit_price: 1,
-    sender: '0x49624992dd72da077ee19d0be210406a',
-    sender_public_key:
-      'c375de51172059011d519df58151cca6f9f4b573756fe912bd5155ca9050571e', // should be publicKey in hex string format
-    sequence_number: 63,
-    max_gas_amount: 10000000,
-    script: {
-      code: '0x1::TransferScripts::peer_to_peer_v2',
-      type_args: ['0x1::STC::STC'],
-      args: ['0x621500bf2b4aad17a690cb24f9a225c6', '19950u128'],
-    },
-  };
-  await expect(stcClient.estimateGasLimit(params)).resolves.toStrictEqual(
-    new BigNumber(4096),
-  );
+  const functionId = '0x1::TransferScripts::peer_to_peer_v2';
+  const typeArgs = ['0x1::STC::STC'];
+  const args = ['0x621500bf2b4aad17a690cb24f9a225c6', '19950'];
+  const nodeUrl = 'https://barnard-seed.starcoin.org';
+  const chainId = 251;
+  const scriptFunction = (await utils.tx.encodeScriptFunctionByResolve(
+    functionId,
+    typeArgs,
+    args,
+    nodeUrl,
+  )) as starcoin_types.TransactionPayload;
+  const sender = '0x7014a4259a73a328818e9eb8a926ca97';
+  const senderPublicKey =
+    '0xacb436a0dd18370ddae604a54175b00661003ea464e93217e94e727172e04a8c';
+  const maxGasAmount = 40000000;
+  const gasUnitPrice = 1;
+  const nonce = 63;
+  const expirationTimestampSecs = Math.floor(Date.now() / 1000) + 60 * 60;
 
-  expect(mockedRPC.call).toHaveBeenCalledWith('contract.dry_run', [params]);
-});
+  const rawUserTransaction = utils.tx.generateRawUserTransaction(
+    sender,
+    scriptFunction,
+    maxGasAmount,
+    gasUnitPrice,
+    nonce,
+    expirationTimestampSecs,
+    chainId,
+  );
+  const rawUserTransactionHex = encoding.bcsEncode(rawUserTransaction);
+  await expect(
+    stcClient.estimateGasLimitAndTokensChangedTo(
+      rawUserTransactionHex,
+      senderPublicKey,
+    ),
+  ).resolves.toStrictEqual({
+    feeLimit: new BigNumber(4096),
+    tokensChangedTo: {
+      '0x00000000000000000000000000000001::STC::STC': '548225404',
+    },
+  });
+
+  expect(mockedRPC.call).toHaveBeenCalledWith('contract.dry_run_raw', [
+    rawUserTransactionHex,
+    senderPublicKey,
+  ]);
+}, 50000);
 test('broadcastTransaction', async () => {
   mockedRPC.call.mockReturnValueOnce(
     Promise.resolve(

@@ -32,14 +32,12 @@ class Provider extends BaseProvider {
     const txInput = unsignedTx.inputs[0];
     const txOutput = unsignedTx.outputs[0];
     const payload = unsignedTx.payload || {};
-    let nonce = unsignedTx.nonce;
+
+    const nonce = unsignedTx.nonce;
     let feeLimit = unsignedTx.feeLimit;
+    const fromAddr = txInput.address;
+    let txPayload: starcoin_types.TransactionPayload;
     if (txInput && txOutput) {
-      const senderPublicKey = txInput.publicKey;
-      if (!feeLimit) {
-        check(senderPublicKey, 'senderPublicKey is required');
-      }
-      const fromAddr = txInput.address;
       let toAddr = txOutput.address;
       const amount = txOutput.value;
       const tokenAddress = txOutput.tokenAddress;
@@ -49,49 +47,71 @@ class Provider extends BaseProvider {
           ? riv.accountAddress
           : '0x' + riv.accountAddress;
       }
-      if (typeof nonce === 'undefined') {
-        nonce = (await (await this.starcoin).getAddresses([fromAddr]))[0]
-          ?.nonce;
-        check(typeof nonce !== 'undefined', 'nonce is not available');
-      }
-      payload.expirationTime =
-        payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
-      const strTypeArgs = [tokenAddress ?? '0x1::STC::STC'];
-      const tyArgs = utils.tx.encodeStructTypeTags(strTypeArgs);
+      const typeArgs = [tokenAddress ?? '0x1::STC::STC'];
       const functionId = '0x1::TransferScripts::peer_to_peer_v2';
-      const amountSCSHex = (function () {
-        const se = new bcs.BcsSerializer();
-        se.serializeU128(BigInt(amount.toNumber()));
-        return hexlify(se.getBytes());
-      })();
-      const args = [arrayify(toAddr), arrayify(amountSCSHex)];
-      payload.scriptFn = utils.tx.encodeScriptFunction(
+      const args = [toAddr, BigInt(amount.toNumber())];
+      const nodeUrl = (await this.starcoin).rpc?.url;
+      const scriptFunction = (await utils.tx.encodeScriptFunctionByResolve(
         functionId,
-        tyArgs,
+        typeArgs,
         args,
+        nodeUrl,
+      )) as starcoin_types.TransactionPayload;
+      payload.scriptFn = scriptFunction;
+      txPayload = scriptFunction;
+    } else if (payload.data) {
+      txPayload = stcEncoding.bcsDecode(
+        starcoin_types.TransactionPayload,
+        payload.data,
       );
-      feeLimit =
-        feeLimit ||
-        (await (
-          await this.starcoin
-        ).estimateGasLimit({
-          chain_id: this.chainInfo.implOptions.chainId,
-          gas_unit_price: feePricePerUnit.toNumber(),
-          sender: fromAddr,
-          sender_public_key: senderPublicKey,
-          sequence_number: nonce,
-          max_gas_amount: 1000000,
-          script: {
-            code: functionId,
-            type_args: strTypeArgs,
-            args: [toAddr, '19950u128'],
-          },
-        }));
+    } else {
+      // should not be here
+      throw new Error('invalid unsignedTx payload');
+    }
+    const senderPublicKey = txInput.publicKey || '';
+    if (!feeLimit) {
+      check(senderPublicKey, 'senderPublicKey is required');
+    }
+    if (typeof nonce === 'undefined') {
+      throw new Error('nonce is not available');
+    }
+    payload.expirationTime =
+      payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
+
+    const maxGasAmount = 4000000;
+    const chainId = this.chainInfo.implOptions.chainId;
+    const gasUnitPrice = feePricePerUnit.toNumber();
+    const expirationTimestampSecs =
+      payload.expirationTime || Math.floor(Date.now() / 1000) + 60 * 60;
+    const rawUserTransaction = utils.tx.generateRawUserTransaction(
+      fromAddr,
+      txPayload,
+      maxGasAmount,
+      gasUnitPrice,
+      nonce as number | BigInt,
+      expirationTimestampSecs,
+      chainId,
+    );
+
+    const rawUserTransactionHex = stcEncoding.bcsEncode(rawUserTransaction);
+
+    let tokensChangedTo;
+
+    if (!feeLimit) {
+      const result = await (
+        await this.starcoin
+      ).estimateGasLimitAndTokensChangedTo(
+        rawUserTransactionHex,
+        senderPublicKey,
+      );
+      feeLimit = result.feeLimit;
+      tokensChangedTo = result.tokensChangedTo;
     }
     return {
       inputs: txInput ? [txInput] : [],
       outputs: txOutput ? [txOutput] : [],
       feeLimit,
+      tokensChangedTo,
       feePricePerUnit,
       nonce,
       payload,
@@ -173,15 +193,31 @@ class Provider extends BaseProvider {
   }
 
   async signMessage(
-    { message }: TypedMessage,
+    { type, message: messageHex }: TypedMessage,
     signer: Signer,
     address?: string,
   ): Promise<string> {
     const privateKey = await signer.getPrvkey();
-    const { signature } = await utils.signedMessage.signMessage(
-      message,
+    const originMessage = Buffer.from(
+      ethUtil.stripHexPrefix(messageHex),
+      'hex',
+    ).toString('utf8');
+    const { publicKey, signature } = await utils.signedMessage.signMessage(
+      originMessage,
       privateKey.toString('hex'),
     );
+    if (type === 1) {
+      const chainId = parseInt(this.chainInfo.implOptions.chainId);
+      const msgBytes = arrayify(messageHex);
+      const signingMessage = new starcoin_types.SigningMessage(msgBytes);
+      const signedMessageHex = await utils.signedMessage.generateSignedMessage(
+        signingMessage,
+        chainId,
+        publicKey,
+        signature,
+      );
+      return signedMessageHex;
+    }
     return signature;
   }
 
@@ -312,14 +348,16 @@ export const buildUnsignedRawTx = (
   chainId: string,
 ): [starcoin_types.RawUserTransaction, Uint8Array] => {
   const fromAddr = unsignedTx.inputs[0].address;
-  const scriptFn = unsignedTx.payload.scriptFn;
+  const { scriptFn, data } = unsignedTx.payload;
+
   const gasLimit = unsignedTx.feeLimit;
   const gasPrice = unsignedTx.feePricePerUnit;
   const nonce = unsignedTx.nonce;
   const expirationTime = unsignedTx.payload.expirationTime;
+
   if (
     !fromAddr ||
-    !scriptFn ||
+    !(scriptFn || data) ||
     !gasLimit ||
     !gasPrice ||
     typeof nonce === 'undefined'
@@ -327,9 +365,16 @@ export const buildUnsignedRawTx = (
     throw new Error('invalid unsignedTx');
   }
 
+  let txPayload: starcoin_types.TransactionPayload;
+  if (scriptFn) {
+    txPayload = scriptFn;
+  } else {
+    txPayload = stcEncoding.bcsDecode(starcoin_types.TransactionPayload, data);
+  }
+
   const rawTxn = utils.tx.generateRawUserTransaction(
     fromAddr,
-    scriptFn,
+    txPayload,
     gasLimit.toNumber(),
     gasPrice.toNumber(),
     nonce,
