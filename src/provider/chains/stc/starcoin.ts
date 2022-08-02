@@ -162,7 +162,12 @@ class StcClient extends BaseClient {
       feeLimit = new BigNumber(parseInt(resp.gas_used));
       tokensChangedTo = this.getTokensChangedTo(resp, addressHex);
     } else {
-      feeLimit = new BigNumber(DEFAULT_GAS_LIMIT);
+      if (isNaN(parseInt(resp?.gas_used))) {
+        feeLimit = new BigNumber(DEFAULT_GAS_LIMIT);
+      } else {
+        // In case of insufficient balance.
+        feeLimit = new BigNumber(parseInt(resp?.gas_used));
+      }
       tokensChangedTo = {};
     }
     return { feeLimit, tokensChangedTo };
