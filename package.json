@@ -69,6 +69,7 @@
     "hi-base32": "^0.5.1",
     "js-conflux-sdk": "^1.7.1",
     "js-sha512": "^0.8.0",
+    "memoizee": "^0.4.15",
     "timeout-signal": "^1.1.0",
     "tweetnacl": "^1.0.3",
     "whatwg-url": "^7.0.0"
@@ -82,6 +83,7 @@
     "@types/bs58check": "^2.1.0",
     "@types/elliptic": "^6.4.13",
     "@types/jest": "^27.0.2",
+    "@types/memoizee": "^0.4.8",
     "@types/node": "^12.0.0",
     "@types/whatwg-url": "^8.2.1",
     "@typescript-eslint/eslint-plugin": "^4.0.1",

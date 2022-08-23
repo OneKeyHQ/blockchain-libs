@@ -1,5 +1,6 @@
 import { defaultAbiCoder } from '@ethersproject/abi';
 import BigNumber from 'bignumber.js';
+import memoizee from 'memoizee';
 
 import { fromBigIntHex } from '../../../basic/bignumber-plus';
 import { check } from '../../../basic/precondtion';
@@ -334,34 +335,40 @@ class Geth extends BaseClient {
     return await this.rpc.call('eth_sendRawTransaction', [rawTx]);
   }
 
-  estimateGasLimit(
-    fromAddress: string,
-    toAddress: string,
-    value: string,
-    data?: string,
-  ): Promise<string> {
-    return this.rpc.call('eth_estimateGas', [
-      {
-        from: fromAddress,
-        to: toAddress || undefined, // undefined is for deploy contract calls.
-        value: value,
-        data: data || '0x',
-      },
-    ]);
-  }
+  estimateGasLimit = memoizee(
+    async (
+      fromAddress: string,
+      toAddress: string,
+      value: string,
+      data?: string,
+    ): Promise<string> => {
+      return this.rpc.call('eth_estimateGas', [
+        {
+          from: fromAddress,
+          to: toAddress || undefined, // undefined is for deploy contract calls.
+          value: value,
+          data: data || '0x',
+        },
+      ]);
+    },
+    { promise: true, primitive: true, maxAge: 1000 * 10, max: 10 },
+  );
 
-  async isContract(address: string): Promise<boolean> {
-    let code: string = await this.rpc.call('eth_getCode', [
-      address,
-      Geth.__LAST_BLOCK__,
-    ]);
+  isContract = memoizee(
+    async (address: string): Promise<boolean> => {
+      let code: string = await this.rpc.call('eth_getCode', [
+        address,
+        Geth.__LAST_BLOCK__,
+      ]);
 
-    if (code && code.startsWith('0x')) {
-      code = code.slice(2);
-    }
+      if (code && code.startsWith('0x')) {
+        code = code.slice(2);
+      }
 
-    return code.length > 0;
-  }
+      return code.length > 0;
+    },
+    { promise: true, primitive: true, max: 50 },
+  );
 
   async batchEthCall(
     calls: Array<{ to: string; data: string }>,
