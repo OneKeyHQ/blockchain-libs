@@ -10,7 +10,7 @@ class JsonRPCRequest {
   readonly timeout: number;
   readonly headers: Record<string, string>;
 
-  constructor(url: string, headers?: Record<string, string>, timeout = 10000) {
+  constructor(url: string, headers?: Record<string, string>, timeout = 30000) {
     this.url = url;
     this.timeout = timeout;
 
