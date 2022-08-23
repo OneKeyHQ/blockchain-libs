@@ -471,5 +471,5 @@ test('isContract', async () => {
   ]);
 
   rpc.call.mockReturnValueOnce(Promise.resolve('0x'));
-  await expect(geth.isContract('fake_address')).resolves.toBe(false);
+  await expect(geth.isContract('fake_address_2')).resolves.toBe(false);
 });
