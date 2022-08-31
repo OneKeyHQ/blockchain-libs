@@ -1,5 +1,6 @@
 import { defaultAbiCoder } from '@ethersproject/abi';
 import BigNumber from 'bignumber.js';
+import { providers } from 'ethers';
 import memoizee from 'memoizee';
 
 import { fromBigIntHex } from '../../../basic/bignumber-plus';
@@ -50,10 +51,12 @@ class Geth extends BaseClient {
   static readonly __LAST_BLOCK__ = 'latest';
   private _mmFee!: MmFee;
   readonly rpc: JsonRPCRequest;
+  readonly ethersProvider: providers.JsonRpcProvider;
 
   constructor(url: string) {
     super();
     this.rpc = new JsonRPCRequest(url);
+    this.ethersProvider = new providers.JsonRpcProvider(url);
   }
 
   get mmFee(): MmFee {
