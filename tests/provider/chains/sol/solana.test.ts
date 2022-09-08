@@ -7,6 +7,7 @@ import { TransactionStatus } from '../../../../src/types/provider';
 jest.mock('../../../../src/basic/request/json-rpc');
 
 const mockRPCClass = JsonRPCRequest as jest.MockedClass<typeof JsonRPCRequest>;
+const GET_BALANCE_OPTIONS = { encoding: 'jsonParsed', commitment: 'processed' };
 
 let solana: Solana;
 let mockedRPC: any;
@@ -130,35 +131,26 @@ test('getBalances', async () => {
   ]);
 
   expect(mockedRPC.batchCall).toHaveBeenCalledWith([
-    [
-      'getAccountInfo',
-      ['fake_system_account_address', { encoding: 'jsonParsed' }],
-    ],
+    ['getAccountInfo', ['fake_system_account_address', GET_BALANCE_OPTIONS]],
     [
       'getTokenAccountsByOwner',
       [
         'fake_system_account_address',
         { mint: 'fake_token_mint_address' },
-        { encoding: 'jsonParsed' },
+        GET_BALANCE_OPTIONS,
       ],
     ],
     [
       'getAccountInfo',
-      [
-        'fake_system_account_address_with_no_balance',
-        { encoding: 'jsonParsed' },
-      ],
+      ['fake_system_account_address_with_no_balance', GET_BALANCE_OPTIONS],
     ],
-    [
-      'getAccountInfo',
-      ['fake_system_account_address', { encoding: 'jsonParsed' }],
-    ],
+    ['getAccountInfo', ['fake_system_account_address', GET_BALANCE_OPTIONS]],
     [
       'getTokenAccountsByOwner',
       [
         'fake_system_account_address',
         { mint: 'fake_token_mint_address' },
-        { encoding: 'jsonParsed' },
+        GET_BALANCE_OPTIONS,
       ],
     ],
     [
@@ -166,7 +158,7 @@ test('getBalances', async () => {
       [
         'fake_system_account_address_with_no_balance',
         { mint: 'fake_token_mint_address' },
-        { encoding: 'jsonParsed' },
+        GET_BALANCE_OPTIONS,
       ],
     ],
   ]);
