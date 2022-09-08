@@ -86,12 +86,21 @@ class Solana extends BaseClient {
             [
               request.address,
               { mint: request.coin.tokenAddress },
-              { encoding: PARAMS_ENCODINGS.JSON_PARSED },
+              {
+                encoding: PARAMS_ENCODINGS.JSON_PARSED,
+                commitment: 'processed',
+              },
             ],
           ]
         : [
             RPC_METHODS.GET_ACCOUNT_INFO,
-            [request.address, { encoding: PARAMS_ENCODINGS.JSON_PARSED }],
+            [
+              request.address,
+              {
+                encoding: PARAMS_ENCODINGS.JSON_PARSED,
+                commitment: 'processed',
+              },
+            ],
           ],
     );
     const resps: Array<{ [key: string]: any } | undefined> =
