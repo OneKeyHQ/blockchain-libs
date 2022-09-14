@@ -156,39 +156,40 @@ class Provider extends BaseProvider {
   }
 
   async verifyAddress(address: string): Promise<AddressValidation> {
-    let isValid = true;
-    let encoding = undefined;
-    let normalizeAddress = address;
     if (address.startsWith('stc')) {
       try {
         const riv = stcEncoding.decodeReceiptIdentifier(address);
-        normalizeAddress = '0x' + riv.accountAddress;
-        encoding = 'bech32';
+        return {
+          normalizedAddress: '0x' + riv.accountAddress,
+          displayAddress: address,
+          isValid: true,
+          encoding: 'bech32',
+        };
       } catch (error) {
-        isValid = false;
+        // pass
       }
     } else {
       try {
-        const accountAddress = stcEncoding.addressToSCS(address);
+        const normalizedAddress = address.startsWith('0x')
+          ? address.toLowerCase()
+          : '0x' + address.toLowerCase();
+        const accountAddress = stcEncoding.addressToSCS(normalizedAddress);
         // in order to check invalid address length, because the auto padding 0 at head of address
-        if (
-          stcEncoding.addressFromSCS(accountAddress) ===
-          (address.startsWith('0x') ? address : '0x' + address)
-        ) {
-          encoding = 'hex';
-        } else {
-          isValid = false;
+        if (stcEncoding.addressFromSCS(accountAddress) === normalizedAddress) {
+          return {
+            normalizedAddress,
+            displayAddress: normalizedAddress,
+            isValid: true,
+            encoding: 'hex',
+          };
         }
       } catch (error) {
-        isValid = false;
+        // pass
       }
     }
 
     return {
-      normalizedAddress: isValid ? normalizeAddress : undefined,
-      displayAddress: isValid ? address : undefined,
-      isValid,
-      encoding,
+      isValid: false,
     };
   }
 

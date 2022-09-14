@@ -30,8 +30,8 @@ describe('verifyAddress', () => {
     await expect(
       provider.verifyAddress('b61a35af603018441b06177a8820ff2a'),
     ).resolves.toStrictEqual({
-      normalizedAddress: 'b61a35af603018441b06177a8820ff2a',
-      displayAddress: 'b61a35af603018441b06177a8820ff2a',
+      normalizedAddress: '0xb61a35af603018441b06177a8820ff2a',
+      displayAddress: '0xb61a35af603018441b06177a8820ff2a',
       isValid: true,
       encoding: 'hex',
     });
@@ -40,20 +40,14 @@ describe('verifyAddress', () => {
     await expect(
       provider.verifyAddress('0xb61a35af603018441b06177a8820ff2'),
     ).resolves.toStrictEqual({
-      normalizedAddress: undefined,
-      displayAddress: undefined,
       isValid: false,
-      encoding: undefined,
     });
   });
   test('verify hex encoding address with longer length', async () => {
     await expect(
       provider.verifyAddress('0xb61a35af603018441b06177a8820ff2ab'),
     ).resolves.toStrictEqual({
-      normalizedAddress: undefined,
-      displayAddress: undefined,
       isValid: false,
-      encoding: undefined,
     });
   });
   test('verify bech32 receiptIdentifier encoded with auth key', async () => {
@@ -83,10 +77,7 @@ describe('verifyAddress', () => {
     await expect(
       provider.verifyAddress('stc1pr9xnd0n9492jq8k8j9nt3r9p3crvw03'),
     ).resolves.toStrictEqual({
-      normalizedAddress: undefined,
-      displayAddress: undefined,
       isValid: false,
-      encoding: undefined,
     });
   });
 });
