@@ -135,14 +135,16 @@ test('Batch call RPC as expected', async () => {
         JSON.stringify([
           {
             jsonrpc: '2.0',
+            id: 1,
             result: {
-              pong1: 'success',
+              pong2: 'success',
             },
           },
           {
             jsonrpc: '2.0',
+            id: 0,
             result: {
-              pong2: 'success',
+              pong1: 'success',
             },
           },
         ]),
@@ -185,7 +187,6 @@ test('Batch call RPC as expected', async () => {
         method: 'ping1',
         params: { v1: 1001 },
       },
-
       {
         jsonrpc: '2.0',
         id: 1,

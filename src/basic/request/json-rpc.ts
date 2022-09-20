@@ -119,15 +119,17 @@ class JsonRPCRequest {
 
     // @ts-ignore
     return Promise.all(
-      jsonResponses.map((response) =>
-        JsonRPCRequest.parseRPCResponse(response).catch((e) => {
-          if (e instanceof JsonPRCResponseError && ignoreSoloError) {
-            return undefined;
-          } else {
-            throw e;
-          }
-        }),
-      ),
+      jsonResponses
+        .sort(({ id: idA }, { id: idB }) => idA - idB)
+        .map((response) =>
+          JsonRPCRequest.parseRPCResponse(response).catch((e) => {
+            if (e instanceof JsonPRCResponseError && ignoreSoloError) {
+              return undefined;
+            } else {
+              throw e;
+            }
+          }),
+        ),
     );
   }
 
