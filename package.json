@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.47",
+  "version": "0.0.48",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -22,7 +22,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "npx patch-package",
     "build": "run-s clean build:main",
     "build:main": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
