@@ -22,6 +22,7 @@
     "node": ">=10"
   },
   "scripts": {
+    "postinstall": "patch-package",
     "build": "run-s clean build:main",
     "build:main": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
