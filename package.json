@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.47",
+  "version": "0.0.48",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -22,7 +22,7 @@
     "node": ">=10"
   },
   "scripts": {
-    "postinstall": "patch-package",
+    "postinstall": "npx patch-package",
     "build": "run-s clean build:main",
     "build:main": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
@@ -94,6 +94,7 @@
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-unused-imports": "^1.1.5",
+    "patch-package": "^6.5.0",
     "husky": "^7.0.2",
     "jest": "^27.2.5",
     "lint-staged": "^11.1.2",
