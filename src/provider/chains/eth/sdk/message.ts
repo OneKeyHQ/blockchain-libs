@@ -15,8 +15,8 @@ const hashMessage = (messageType: MessageTypes, message: string): string => {
       return ethUtil.addHexPrefix(message);
     case MessageTypes.PERSONAL_SIGN:
       return ethUtil.addHexPrefix(
-        // @ts-ignore
         ethUtil
+          // @ts-ignore
           .hashPersonalMessage(signUtil.legacyToBuffer(message))
           .toString('hex'),
       );
