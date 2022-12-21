@@ -1,7 +1,7 @@
 {
   "name": "@onekeyfe/blockchain-libs",
   "description": "OneKey Blockchain Libs",
-  "version": "0.0.46",
+  "version": "0.0.47",
   "author": "OneKey Team",
   "homepage": "https://github.com/OneKeyHQ/blockchain-libs",
   "bugs": {
@@ -22,6 +22,7 @@
     "node": ">=10"
   },
   "scripts": {
+    "postinstall": "patch-package",
     "build": "run-s clean build:main",
     "build:main": "tsc -p tsconfig.json",
     "fix": "run-s fix:*",
@@ -47,7 +48,7 @@
   ],
   "dependencies": {
     "@conflux-dev/conflux-address-js": "^1.3.11",
-    "@metamask/eth-sig-util": "^4.0.0",
+    "@metamask/eth-sig-util": "^4.0.1",
     "@solana/spl-token": "^0.1.8",
     "@solana/web3.js": "^1.29.2",
     "@starcoin/starcoin": "^2.1.5",

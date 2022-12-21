@@ -1,0 +1,21 @@
+diff --git a/node_modules/@metamask/eth-sig-util/dist/index.d.ts b/node_modules/@metamask/eth-sig-util/dist/index.d.ts
+index 48ddf59..9c80688 100644
+--- a/node_modules/@metamask/eth-sig-util/dist/index.d.ts
++++ b/node_modules/@metamask/eth-sig-util/dist/index.d.ts
+@@ -1,4 +1,4 @@
+ export * from './personal-sign';
+ export * from './sign-typed-data';
+ export * from './encryption';
+-export { concatSig, normalize } from './utils';
++export { concatSig, normalize, legacyToBuffer } from './utils';
+diff --git a/node_modules/@metamask/eth-sig-util/dist/index.js b/node_modules/@metamask/eth-sig-util/dist/index.js
+index 1576ea2..40f5099 100644
+--- a/node_modules/@metamask/eth-sig-util/dist/index.js
++++ b/node_modules/@metamask/eth-sig-util/dist/index.js
+@@ -17,4 +17,6 @@ __exportStar(require("./encryption"), exports);
+ var utils_1 = require("./utils");
+ Object.defineProperty(exports, "concatSig", { enumerable: true, get: function () { return utils_1.concatSig; } });
+ Object.defineProperty(exports, "normalize", { enumerable: true, get: function () { return utils_1.normalize; } });
++Object.defineProperty(exports, "legacyToBuffer", { enumerable: true, get: function () { return utils_1.legacyToBuffer; } });
++
+ //# sourceMappingURL=index.js.map
