@@ -1,5 +1,4 @@
-import * as signUtil from '@metamask/eth-sig-util';
-import { legacyToBuffer } from '@metamask/eth-sig-util/dist/utils';
+import * as signUtil from '@metamask/eth-sig-util'; // TODO patch legacyToBuffer in app-monorepo
 import * as ethUtil from 'ethereumjs-util';
 
 enum MessageTypes {
@@ -16,7 +15,10 @@ const hashMessage = (messageType: MessageTypes, message: string): string => {
       return ethUtil.addHexPrefix(message);
     case MessageTypes.PERSONAL_SIGN:
       return ethUtil.addHexPrefix(
-        ethUtil.hashPersonalMessage(legacyToBuffer(message)).toString('hex'),
+        // @ts-ignore
+        ethUtil
+          .hashPersonalMessage(signUtil.legacyToBuffer(message))
+          .toString('hex'),
       );
     case MessageTypes.TYPE_DATA_V1:
       return ethUtil.addHexPrefix(
